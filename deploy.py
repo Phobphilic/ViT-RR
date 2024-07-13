@@ -11,7 +11,6 @@ IMG_SIZE = 64
 st.set_page_config(layout="wide", page_title="Reactivity Ratio Determination Model")
 
 def add_custom_css():
-    # 使用 HTML 标签 <style> 插入自定义 CSS
     css = """
     <style>
         html, body, [class*="css"] {
@@ -92,9 +91,9 @@ def main():
         if col2.button('Upload Excel File'):
             st.session_state.input_method = 'Excel'
             if st.session_state.model_type == 'Binary':
-                st.image("D:\Monte_Carlo\excel_format_binary.png", caption="Excel format example for Binary Model")
+                st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
             elif st.session_state.model_type == 'Ternary':
-                st.image("D:\Monte_Carlo\excel_format_ternary.png", caption="Excel format example for Ternary Model")
+                st.image("excel_format_ternary.png", caption="Excel format example for Ternary Model")
 
 
         if st.session_state.input_method:
