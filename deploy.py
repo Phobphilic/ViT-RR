@@ -67,9 +67,9 @@ def main():
         if col2.button('Upload Excel File'):
             st.session_state.input_method = 'Excel'
             if st.session_state.model_type == 'Binary':
-                st.image("images/excel_format_binary.png", caption="Excel format example for Binary Model")
+                st.image("ViT-RR/images/excel_format_binary.png", caption="Excel format example for Binary Model")
             elif st.session_state.model_type == 'Ternary':
-                st.image("images/excel_format_ternary.png", caption="Excel format example for Ternary Model")
+                st.image("ViT-RR/images/excel_format_ternary.png", caption="Excel format example for Ternary Model")
 
 
         if st.session_state.input_method:
