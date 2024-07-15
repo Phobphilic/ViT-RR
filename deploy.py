@@ -119,8 +119,12 @@ def display_results(pred_values, model_type):
     with st.container():
         st.write(f"Results ({model_type.title()})")
         if model_type == 'binary':
-            results_str = f"r1 = {pred_values[0]:.2f}, r2 = {pred_values[1]:.2f}"
-            st.text(results_str)
+            results_html = f"""
+            <div>
+                <p>r1 = {pred_values[0]:.2f}, r2 = {pred_values[1]:.2f}</p>
+            </div>
+            """
+            st.markdown(results_html, unsafe_allow_html=True)
         elif model_type == 'ternary':
             results_html = f"""
             <div>
