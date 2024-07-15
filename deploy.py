@@ -90,7 +90,7 @@ def main():
                         else:
                             st.success("Excel file has been loaded successfully.")
                     except Exception as e:
-                        st.error(f""Failed to read Excel file. Please try the example format."")
+                        st.error("Failed to read Excel file. Please try the example format.")
 
             if data_list and st.button(f'Predict({st.session_state.model_type})'):
                 prediction = predict_model(
