@@ -10,6 +10,29 @@ IMG_SIZE = 64
 
 st.set_page_config(layout="wide", page_title="Reactivity Ratio Determination Model")
 
+def add_custom_css():
+    css = """
+    <style>
+        html, body, [class*="css"] {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+        }
+        .css-1d391kg {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .stButton>button {
+            width: 100%;
+        }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
 @st.cache_data
 def load_models():
     binary_model = SimpViT()
@@ -41,6 +64,7 @@ def predict_model(model, data, data_transform_function, img_size):
         raise
 
 def main():
+    add_custom_css()
     st.title('Reactivity Ratio Determination Model')
 
     if 'model_type' not in st.session_state:
