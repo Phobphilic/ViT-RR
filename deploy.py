@@ -90,6 +90,7 @@ def predict_model(model, data, data_transform_function, img_size):
 
 def main():
     add_custom_css()
+    st.title('Reactivity Ratio Determination Model')
     if 'registered' not in st.session_state:
         st.session_state['registered'] = False
     register_user()
@@ -111,18 +112,6 @@ def main():
             handle_model_interaction()
 
 def handle_model_interaction():
-    col1, col2 = st.columns(2)
-    if col1.button('Binary Model'):
-        st.session_state.model_type = 'Binary'
-        st.session_state.input_method = None
-    if col2.button('Ternary Model'):
-        st.session_state.model_type = 'Ternary'
-        st.session_state.input_method = None
-
-    if st.session_state.model_type:
-        st.write(f"You selected the {st.session_state.model_type} model.")
-        st.header(f"Step 2: Input data for {st.session_state.model_type} model")
-
         col1, col2 = st.columns(2)
         if col1.button('Manual Data Entry'):
             st.session_state.input_method = 'Manual'
