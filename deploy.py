@@ -59,17 +59,27 @@ def register_user():
   
     username = st.sidebar.text_input("Username")
     email = st.sidebar.text_input("Email")
-    if st.sidebar.button("Register"):
-        filename = "user_registrations.csv"
-        if os.path.exists(filename):
-            df = pd.read_csv(filename)
+    filename = "user_registrations.csv"
+    # Load existing registrations if available
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        # Check if the current user is already registered
+        if email in df['Email'].values:
+            st.session_state['registered'] = True
+            st.sidebar.success("You are already registered and may continue to use the app.")
         else:
-            df = pd.DataFrame(columns=['Username', 'Email'])
-        new_data = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
-        df = pd.concat([df, new_data], ignore_index=True)
-        df.to_csv(filename, index=False)
-        st.session_state['registered'] = True
-        st.sidebar.success("Registration successful! You may now use the app.")
+            if st.sidebar.button("Register"):
+                new_data = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
+                df = pd.concat([df, new_data], ignore_index=True)
+                df.to_csv(filename, index=False)
+                st.session_state['registered'] = True
+                st.sidebar.success("Registration successful! You may now use the app.")
+    else:
+        if st.sidebar.button("Register"):
+            df = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
+            df.to_csv(filename, index=False)
+            st.session_state['registered'] = True
+            st.sidebar.success("Registration successful! You may now use the app.")
 
 def show_registrations():
     filename = "user_registrations.csv"
