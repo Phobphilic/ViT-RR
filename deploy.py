@@ -66,6 +66,7 @@ def register_user():
         new_data = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
         df = pd.concat([df, new_data], ignore_index=True)
         df.to_csv(filename, index=False)
+        st.session_state['registered'] = True  # Set session state for registration
         st.sidebar.success("Registration successful! You may now use the app.")
 
 def show_registrations():
@@ -91,14 +92,16 @@ def predict_model(model, data, data_transform_function, img_size):
 
 def main():
     add_custom_css()
-    st.title('Reactivity Ratio Determination Model')
+    if 'registered' not in st.session_state:
+        st.session_state['registered'] = False  # Initialize registered state
     register_user()
     show_registrations()
 
-    if 'model_type' not in st.session_state:
-        st.session_state.model_type = None
-    if 'input_method' not in st.session_state:
-        st.session_state.input_method = None
+    if st.session_state['registered']:  # Check if user is registered
+        if 'model_type' not in st.session_state:
+            st.session_state.model_type = None
+        if 'input_method' not in st.session_state:
+            st.session_state.input_method = None
 
     col1, col2 = st.columns(2)
     if col1.button('Binary Model'):
