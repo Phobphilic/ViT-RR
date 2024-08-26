@@ -71,34 +71,42 @@ def predict_model(model, data, data_transform_function, img_size):
 
 # Define and hash passwords
 def hash_password(password):
-    # Generate a salt and hash the password
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode(), salt).decode('utf-8')
 
 def authenticate_users():
+    # User details including hashed passwords
     users = {
         "admin": {
-            "name": "admin",  # Assuming 'name' might be a correct field
             "username": "admin",
             "password": hash_password("password1"),
             "email": "admin@example.com"
         },
         "user": {
-            "name": "user",
             "username": "user",
             "password": hash_password("password2"),
             "email": "user@example.com"
         }
     }
 
-    # Assuming the Authenticate class takes a dictionary of users
-    authenticator = Authenticate(users)
+    # Dictionary to store hashed passwords with usernames as keys
+    usernames = [user for user in users]
+    hashed_passwords = {users[user]['username']: users[user]['password'] for user in users}
 
+    # Create an instance of Authenticate
+    authenticator = Authenticate(
+        username=usernames,
+        password=hashed_passwords,
+        cookie_name='streamlit_auth',  # Set a name for the session cookie
+        cookie_key='some_very_secret_key',  # A secret key for signing the cookie
+        cookie_expiry_days=30,
+        cookie_secure=False,  # Set to True in production with HTTPS
+        cookie_httponly=True
+    )
     return authenticator
 
 authenticator = authenticate_users()
 
-# Main function defining the application logic
 def main():
     add_custom_css()
     # Perform user login
@@ -107,9 +115,9 @@ def main():
     if authentication_status:
         st.sidebar.success(f"Welcome {name}!")
         run_app()  # Allow access to the main app functionality
-    elif authentication_status is False:
+    elif authentication_status == False:
         st.sidebar.error("Username/password is incorrect")
-    elif authentication_status is None:
+    elif authentication_status == None:
         st.sidebar.warning("Please enter your username and password")
 
 def run_app():
