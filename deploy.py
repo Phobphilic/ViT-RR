@@ -75,7 +75,6 @@ def show_registrations():
         df = pd.read_csv(filename)
         total_users = len(df)
         st.sidebar.write(f"Total users registered: {total_users}")
-        st.sidebar.dataframe(df)
 
 def predict_model(model, data, data_transform_function, img_size):
     try:
