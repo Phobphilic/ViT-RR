@@ -5,6 +5,7 @@ import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
 import os
 import bcrypt
+from streamlit_authenticator import Authenticate
 
 # Constants
 IMG_SIZE = 64
@@ -78,7 +79,7 @@ def authenticate_users():
     users = {
         "admin": {
             "username": "admin",
-            "password": "password1",  # You should hash these before deployment or use environment variables
+            "password": "password1",  # Replace with environment variable or secure storage in production
             "email": "admin@example.com"
         },
         "user": {
@@ -90,6 +91,7 @@ def authenticate_users():
     # Hash passwords
     hashed_passwords = {user: hash_password(users[user]["password"]) for user in users}
 
+    # Create and return an instance of Authenticate
     authenticator = Authenticate(
         names=users.keys(),
         usernames=[users[user]["username"] for user in users],
@@ -102,19 +104,21 @@ def authenticate_users():
     )
     return authenticator
 
+# Instantiate authenticator globally
+authenticator = authenticate_users()
+
 # Main function defining the application logic
 def main():
     add_custom_css()
-
     # Perform user login
     name, authentication_status, username = authenticator.login("Login", "sidebar")
 
     if authentication_status:
         st.sidebar.success(f"Welcome {name}!")
         run_app()  # Allow access to the main app functionality
-    elif authentication_status == False:
+    elif authentication_status is False:
         st.sidebar.error("Username/password is incorrect")
-    elif authentication_status == None:
+    elif authentication_status is None:
         st.sidebar.warning("Please enter your username and password")
 
 def run_app():
