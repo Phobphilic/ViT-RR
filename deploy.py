@@ -4,12 +4,15 @@ import streamlit as st
 import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
 import os
+from streamlit_authenticator import Authenticate
 
 # Constants
 IMG_SIZE = 64
 
+# Set up page configuration
 st.set_page_config(layout="wide", page_title="Reactivity Ratio Determination Model")
 
+# Custom CSS to improve the styling
 def add_custom_css():
     css = """
     <style>
@@ -33,6 +36,7 @@ def add_custom_css():
     """
     st.markdown(css, unsafe_allow_html=True)
 
+# Load models from files
 @st.cache_data
 def load_models():
     binary_model = SimpViT()
@@ -52,6 +56,7 @@ def load_models():
 
 binary_model, ternary_model = load_models()
 
+# Function to make predictions
 def predict_model(model, data, data_transform_function, img_size):
     try:
         img_tensor = data_transform_function(np.array(data), img_size=img_size)
@@ -63,8 +68,51 @@ def predict_model(model, data, data_transform_function, img_size):
         st.write(f"Data shape: {np.array(data).shape}")
         raise
 
+# Define and hash passwords
+def authenticate_users():
+    users = {
+        "admin": {
+            "username": "admin",
+            "password": "hash_of_admin_password",
+            "email": "admin@example.com"
+        },
+        "user": {
+            "username": "user",
+            "password": "hash_of_user_password",
+            "email": "user@example.com"
+        }
+    }
+    hashed_passwords = {user: Authenticate.hasher(users[user]["password"]).generate() for user in users}
+    authenticator = Authenticate(
+        names=users.keys(),
+        usernames=[users[user]["username"] for user in users],
+        passwords=hashed_passwords,
+        emails=[users[user]["email"] for user in users],
+        secret_key="some_extremely_secret_key",
+        cookie_expiry_days=30,
+        cookie_secure=False,
+        cookie_httponly=True
+    )
+    return authenticator
+
+authenticator = authenticate_users()
+
+# Main function defining the application logic
 def main():
     add_custom_css()
+
+    # Perform user login
+    name, authentication_status, username = authenticator.login("Login", "sidebar")
+
+    if authentication_status:
+        st.sidebar.success(f"Welcome {name}!")
+        run_app()  # Allow access to the main app functionality
+    elif authentication_status == False:
+        st.sidebar.error("Username/password is incorrect")
+    elif authentication_status == None:
+        st.sidebar.warning("Please enter your username and password")
+
+def run_app():
     st.title('Reactivity Ratio Determination Model')
 
     if 'model_type' not in st.session_state:
