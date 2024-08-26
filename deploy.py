@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
 import os
-from streamlit_authenticator import Authenticate
+import bcrypt
 
 # Constants
 IMG_SIZE = 64
@@ -69,33 +69,38 @@ def predict_model(model, data, data_transform_function, img_size):
         raise
 
 # Define and hash passwords
+def hash_password(password):
+    # Generate a salt and hash the password
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode(), salt)
+
 def authenticate_users():
     users = {
         "admin": {
             "username": "admin",
-            "password": "hash_of_admin_password",
+            "password": "password1",  # You should hash these before deployment or use environment variables
             "email": "admin@example.com"
         },
         "user": {
             "username": "user",
-            "password": "hash_of_user_password",
+            "password": "password2",
             "email": "user@example.com"
         }
     }
-    hashed_passwords = {user: Authenticate.hasher(users[user]["password"]).generate() for user in users}
+    # Hash passwords
+    hashed_passwords = {user: hash_password(users[user]["password"]) for user in users}
+
     authenticator = Authenticate(
         names=users.keys(),
         usernames=[users[user]["username"] for user in users],
         passwords=hashed_passwords,
         emails=[users[user]["email"] for user in users],
-        secret_key="some_extremely_secret_key",
+        secret_key="some_very_secret_key",
         cookie_expiry_days=30,
-        cookie_secure=False,
+        cookie_secure=False,  # Set to True in production with HTTPS
         cookie_httponly=True
     )
     return authenticator
-
-authenticator = authenticate_users()
 
 # Main function defining the application logic
 def main():
