@@ -73,38 +73,29 @@ def predict_model(model, data, data_transform_function, img_size):
 def hash_password(password):
     # Generate a salt and hash the password
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode(), salt)
+    return bcrypt.hashpw(password.encode(), salt).decode('utf-8')
 
 def authenticate_users():
     users = {
         "admin": {
+            "name": "admin",  # Assuming 'name' might be a correct field
             "username": "admin",
-            "password": "password1",  # Replace with environment variable or secure storage in production
+            "password": hash_password("password1"),
             "email": "admin@example.com"
         },
         "user": {
+            "name": "user",
             "username": "user",
-            "password": "password2",
+            "password": hash_password("password2"),
             "email": "user@example.com"
         }
     }
-    # Hash passwords
-    hashed_passwords = {user: hash_password(users[user]["password"]) for user in users}
 
-    # Create and return an instance of Authenticate
-    authenticator = Authenticate(
-        names=users.keys(),
-        usernames=[users[user]["username"] for user in users],
-        passwords=hashed_passwords,
-        emails=[users[user]["email"] for user in users],
-        secret_key="some_very_secret_key",
-        cookie_expiry_days=30,
-        cookie_secure=False,  # Set to True in production with HTTPS
-        cookie_httponly=True
-    )
+    # Assuming the Authenticate class takes a dictionary of users
+    authenticator = Authenticate(users)
+
     return authenticator
 
-# Instantiate authenticator globally
 authenticator = authenticate_users()
 
 # Main function defining the application logic
