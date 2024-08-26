@@ -4,8 +4,6 @@ import streamlit as st
 import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
 import os
-import bcrypt
-from streamlit_authenticator import Authenticate
 
 # Constants
 IMG_SIZE = 64
@@ -13,7 +11,6 @@ IMG_SIZE = 64
 # Set up page configuration
 st.set_page_config(layout="wide", page_title="Reactivity Ratio Determination Model")
 
-# Custom CSS to improve the styling
 def add_custom_css():
     css = """
     <style>
@@ -37,7 +34,6 @@ def add_custom_css():
     """
     st.markdown(css, unsafe_allow_html=True)
 
-# Load models from files
 @st.cache_data
 def load_models():
     binary_model = SimpViT()
@@ -57,69 +53,36 @@ def load_models():
 
 binary_model, ternary_model = load_models()
 
-# Function to make predictions
-def predict_model(model, data, data_transform_function, img_size):
-    try:
-        img_tensor = data_transform_function(np.array(data), img_size=img_size)
-        pred = model(img_tensor.unsqueeze(0))
-        pred_values = np.power(10, pred.squeeze(0).tolist())  # Convert log predictions back to original scale
-        return pred_values
-    except Exception as e:
-        st.error(f"Prediction failed with error: {e}")
-        st.write(f"Data shape: {np.array(data).shape}")
-        raise
+def register_user():
+    st.sidebar.title("User Registration")
+    username = st.sidebar.text_input("Username")
+    email = st.sidebar.text_input("Email")
+    if st.sidebar.button("Register"):
+        filename = "user_registrations.csv"
+        if os.path.exists(filename):
+            df = pd.read_csv(filename)
+        else:
+            df = pd.DataFrame(columns=['Username', 'Email'])
+        new_data = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
+        df = pd.concat([df, new_data], ignore_index=True)
+        df.to_csv(filename, index=False)
+        st.sidebar.success("Registration successful! You may now use the app.")
 
-# Define and hash passwords
-def hash_password(password):
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode(), salt).decode('utf-8')
-
-def authenticate_users():
-    # User credentials formatted according to the expected structure
-    credentials = {
-        "users": {
-            "admin": {
-                "username": "admin",
-                "name": "Admin User",
-                "password": "securepassword1",
-                "email": "admin@example.com"
-            },
-            "user": {
-                "username": "user",
-                "name": "Standard User",
-                "password": "securepassword2",
-                "email": "user@example.com"
-            }
-        }
-    }
-
-    # Create an instance of Authenticate
-    authenticator = Authenticate(
-        credentials=credentials,
-        cookie_name='streamlit_auth',  # Set a name for the session cookie
-        cookie_key='some_very_secret_key',  # A secret key for signing the cookie
-        cookie_expiry_days=30,
-        auto_hash=True  # Enable automatic password hashing
-    )
-    return authenticator
-
-authenticator = authenticate_users()
+def show_registrations():
+    filename = "user_registrations.csv"
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+        total_users = len(df)
+        st.sidebar.write(f"Total users registered: {total_users}")
+        st.sidebar.dataframe(df)
+    else:
+        st.sidebar.write("No users registered yet.")
 
 def main():
     add_custom_css()
-    # Perform user login
-    name, authentication_status, username = authenticator.login("Login", "main")
-
-    if authentication_status:
-        st.sidebar.success(f"Welcome {name}!")
-        run_app()  # Allow access to the main app functionality
-    elif authentication_status is False:
-        st.sidebar.error("Username/password is incorrect")
-    elif authentication_status is None:
-        st.sidebar.warning("Please enter your username and password")
-
-def run_app():
     st.title('Reactivity Ratio Determination Model')
+    register_user()
+    show_registrations()
 
     if 'model_type' not in st.session_state:
         st.session_state.model_type = None
