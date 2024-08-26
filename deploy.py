@@ -55,6 +55,8 @@ binary_model, ternary_model = load_models()
 
 def register_user():
     st.sidebar.title("User Registration")
+    st.sidebar.write("Please register to access the application features.")
+  
     username = st.sidebar.text_input("Username")
     email = st.sidebar.text_input("Email")
     if st.sidebar.button("Register"):
