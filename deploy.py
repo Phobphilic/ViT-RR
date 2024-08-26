@@ -78,6 +78,17 @@ def show_registrations():
     else:
         st.sidebar.write("No users registered yet.")
 
+def predict_model(model, data, data_transform_function, img_size):
+    try:
+        img_tensor = data_transform_function(np.array(data), img_size=img_size)
+        pred = model(img_tensor.unsqueeze(0))
+        pred_values = np.power(10, pred.squeeze(0).tolist())  # Convert log predictions back to original scale
+        return pred_values
+    except Exception as e:
+        st.error(f"Prediction failed with error: {e}")
+        st.write(f"Data shape: {np.array(data).shape}")
+        raise
+
 def main():
     add_custom_css()
     st.title('Reactivity Ratio Determination Model')
@@ -111,7 +122,6 @@ def main():
                 st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
             elif st.session_state.model_type == 'Ternary':
                 st.image("excel_format_ternary.png", caption="Excel format example for Ternary Model")
-
 
         if st.session_state.input_method:
             data_list = []
