@@ -66,7 +66,7 @@ def register_user():
         new_data = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
         df = pd.concat([df, new_data], ignore_index=True)
         df.to_csv(filename, index=False)
-        st.session_state['registered'] = True  # Set session state for registration
+        st.session_state['registered'] = True
         st.sidebar.success("Registration successful! You may now use the app.")
 
 def show_registrations():
@@ -76,8 +76,6 @@ def show_registrations():
         total_users = len(df)
         st.sidebar.write(f"Total users registered: {total_users}")
         st.sidebar.dataframe(df)
-    else:
-        st.sidebar.write("No users registered yet.")
 
 def predict_model(model, data, data_transform_function, img_size):
     try:
@@ -93,16 +91,26 @@ def predict_model(model, data, data_transform_function, img_size):
 def main():
     add_custom_css()
     if 'registered' not in st.session_state:
-        st.session_state['registered'] = False  # Initialize registered state
+        st.session_state['registered'] = False
     register_user()
     show_registrations()
 
-    if st.session_state['registered']:  # Check if user is registered
-        if 'model_type' not in st.session_state:
-            st.session_state.model_type = None
-        if 'input_method' not in st.session_state:
+    if st.session_state['registered']:
+        col1, col2 = st.columns(2)
+        if col1.button('Binary Model'):
+            st.session_state.model_type = 'Binary'
+            st.session_state.input_method = None
+        if col2.button('Ternary Model'):
+            st.session_state.model_type = 'Ternary'
             st.session_state.input_method = None
 
+        if st.session_state.get('model_type'):
+            st.write(f"You selected the {st.session_state.model_type} model.")
+            st.header(f"Step 2: Input data for {st.session_state.model_type} model")
+
+            handle_model_interaction()
+
+def handle_model_interaction():
     col1, col2 = st.columns(2)
     if col1.button('Binary Model'):
         st.session_state.model_type = 'Binary'
