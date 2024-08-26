@@ -75,33 +75,31 @@ def hash_password(password):
     return bcrypt.hashpw(password.encode(), salt).decode('utf-8')
 
 def authenticate_users():
-    # User details including hashed passwords
-    users = {
-        "admin": {
-            "username": "admin",
-            "password": hash_password("password1"),
-            "email": "admin@example.com"
-        },
-        "user": {
-            "username": "user",
-            "password": hash_password("password2"),
-            "email": "user@example.com"
+    # User credentials formatted according to the expected structure
+    credentials = {
+        "users": {
+            "admin": {
+                "username": "admin",
+                "name": "Admin User",
+                "password": "securepassword1",
+                "email": "admin@example.com"
+            },
+            "user": {
+                "username": "user",
+                "name": "Standard User",
+                "password": "securepassword2",
+                "email": "user@example.com"
+            }
         }
     }
 
-    # Dictionary to store hashed passwords with usernames as keys
-    usernames = [user for user in users]
-    hashed_passwords = {users[user]['username']: users[user]['password'] for user in users}
-
     # Create an instance of Authenticate
     authenticator = Authenticate(
-        username=usernames,
-        password=hashed_passwords,
+        credentials=credentials,
         cookie_name='streamlit_auth',  # Set a name for the session cookie
         cookie_key='some_very_secret_key',  # A secret key for signing the cookie
         cookie_expiry_days=30,
-        cookie_secure=False,  # Set to True in production with HTTPS
-        cookie_httponly=True
+        auto_hash=True  # Enable automatic password hashing
     )
     return authenticator
 
@@ -110,14 +108,14 @@ authenticator = authenticate_users()
 def main():
     add_custom_css()
     # Perform user login
-    name, authentication_status, username = authenticator.login("Login", "sidebar")
+    name, authentication_status, username = authenticator.login("Login", "main")
 
     if authentication_status:
         st.sidebar.success(f"Welcome {name}!")
         run_app()  # Allow access to the main app functionality
-    elif authentication_status == False:
+    elif authentication_status is False:
         st.sidebar.error("Username/password is incorrect")
-    elif authentication_status == None:
+    elif authentication_status is None:
         st.sidebar.warning("Please enter your username and password")
 
 def run_app():
