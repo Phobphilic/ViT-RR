@@ -83,14 +83,7 @@ class SimpViT_3D(nn.Module):
         output = self.fc(class_token)
         return output
 
-def fill_missing_rows(data):
-    rows_with_all_zeros = np.all(data == 0, axis=1)
-    if np.any(rows_with_all_zeros):
-        mean_values = np.mean(data[~rows_with_all_zeros], axis=0)
-        data[rows_with_all_zeros] = mean_values
-    return data
-
-def transform_ternary(data, img_size=64, augment=False):
+def transform_ternary(data, img_size=64, normalize=False):
     # Check if data is a list and convert to NumPy array if necessary
     if isinstance(data, list):
         data = np.array(data)
@@ -99,11 +92,12 @@ def transform_ternary(data, img_size=64, augment=False):
     if data.ndim != 2 or data.shape[1] != 6:
         raise ValueError("Input data must be a two-dimensional array with exactly 6 columns.")
     
-    data = fill_missing_rows(data)
+    # Optionally normalize data
+    if normalize:
+        data = data / data.max(axis=0)
 
     # Initialize the image array
     img_arr = np.zeros((3, img_size, img_size, img_size), dtype=np.float32)
-    f1, f2, total_conv, conv1, conv2, conv3 = data.T
     
     # Calculate indices ensuring they are within bounds
     X = np.clip((data[:, 0] * img_size).astype(int), 0, img_size - 1)
@@ -112,13 +106,9 @@ def transform_ternary(data, img_size=64, augment=False):
     
     # Fill image array using advanced indexing
     idx = (X, Y, Z)
-    img_arr[0][idx] = conv1
-    img_arr[1][idx] = conv2
-    img_arr[2][idx] = conv3
-
-    if augment:
-        if np.random.rand() > 0.5:
-            img_arr = np.flip(img_arr, axis=np.random.choice([1, 2, 3])).copy()
+    img_arr[0][idx] = data[:, 3]
+    img_arr[1][idx] = data[:, 4]
+    img_arr[2][idx] = data[:, 5]
 
     # Convert to a PyTorch tensor
     return torch.tensor(img_arr, dtype=torch.float32)
