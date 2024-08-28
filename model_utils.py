@@ -83,7 +83,7 @@ class SimpViT_3D(nn.Module):
         output = self.fc(class_token)
         return output
 
-def transform_ternary(data, img_size=64, normalize=False):
+def transform_ternary(data, img_size=64):
     # Check if data is a list and convert to NumPy array if necessary
     if isinstance(data, list):
         data = np.array(data)
@@ -91,10 +91,6 @@ def transform_ternary(data, img_size=64, normalize=False):
     # Check the shape of the data
     if data.ndim != 2 or data.shape[1] != 6:
         raise ValueError("Input data must be a two-dimensional array with exactly 6 columns.")
-    
-    # Optionally normalize data
-    if normalize:
-        data = data / data.max(axis=0)
 
     # Initialize the image array
     img_arr = np.zeros((3, img_size, img_size, img_size), dtype=np.float32)
