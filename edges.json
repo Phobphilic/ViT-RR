@@ -1,0 +1,392 @@
+[
+  {
+    "From": "VAc",
+    "To": "tBA",
+    "Weight": 0.001
+  },
+  {
+    "From": "iBVE",
+    "To": "HFBA",
+    "Weight": 0.0013
+  },
+  {
+    "From": "VAc",
+    "To": "HFBA",
+    "Weight": 0.0036
+  },
+  {
+    "From": "iBVE",
+    "To": "MMA",
+    "Weight": 0.0043
+  },
+  {
+    "From": "iBVE",
+    "To": "MA",
+    "Weight": 0.0052
+  },
+  {
+    "From": "iBVE",
+    "To": "nBA",
+    "Weight": 0.0056
+  },
+  {
+    "From": "iBVE",
+    "To": "TFMA",
+    "Weight": 0.01
+  },
+  {
+    "From": "VAc",
+    "To": "MMA",
+    "Weight": 0.0122
+  },
+  {
+    "From": "VAc",
+    "To": "nBA",
+    "Weight": 0.0137
+  },
+  {
+    "From": "DMA",
+    "To": "HFBA",
+    "Weight": 0.014
+  },
+  {
+    "From": "VAc",
+    "To": "MA",
+    "Weight": 0.0155
+  },
+  {
+    "From": "iBVE",
+    "To": "St",
+    "Weight": 0.0183
+  },
+  {
+    "From": "VAc",
+    "To": "St",
+    "Weight": 0.021
+  },
+  {
+    "From": "VAc",
+    "To": "TFMA",
+    "Weight": 0.03
+  },
+  {
+    "From": "HFBA",
+    "To": "DMA",
+    "Weight": 0.0518
+  },
+  {
+    "From": "HFBA",
+    "To": "St",
+    "Weight": 0.0606
+  },
+  {
+    "From": "iBVE",
+    "To": "DMA",
+    "Weight": 0.0673
+  },
+  {
+    "From": "DMA",
+    "To": "MMA",
+    "Weight": 0.0703
+  },
+  {
+    "From": "DMA",
+    "To": "MA",
+    "Weight": 0.0724
+  },
+  {
+    "From": "DMA",
+    "To": "nBA",
+    "Weight": 0.0808
+  },
+  {
+    "From": "VAc",
+    "To": "DMA",
+    "Weight": 0.0844
+  },
+  {
+    "From": "nBA",
+    "To": "St",
+    "Weight": 0.0921
+  },
+  {
+    "From": "nBA",
+    "To": "DMA",
+    "Weight": 0.1255
+  },
+  {
+    "From": "tBA",
+    "To": "St",
+    "Weight": 0.183
+  },
+  {
+    "From": "MA",
+    "To": "St",
+    "Weight": 0.1856
+  },
+  {
+    "From": "St",
+    "To": "HFBA",
+    "Weight": 0.2183
+  },
+  {
+    "From": "TFMA",
+    "To": "St",
+    "Weight": 0.23
+  },
+  {
+    "From": "DMA",
+    "To": "St",
+    "Weight": 0.2362
+  },
+  {
+    "From": "MA",
+    "To": "DMA",
+    "Weight": 0.259
+  },
+  {
+    "From": "nBA",
+    "To": "MMA",
+    "Weight": 0.298
+  },
+  {
+    "From": "St",
+    "To": "TFMA",
+    "Weight": 0.31
+  },
+  {
+    "From": "HFBA",
+    "To": "MMA",
+    "Weight": 0.3943
+  },
+  {
+    "From": "DMA",
+    "To": "TFMA",
+    "Weight": 0.41
+  },
+  {
+    "From": "tBA",
+    "To": "MMA",
+    "Weight": 0.424
+  },
+  {
+    "From": "St",
+    "To": "MMA",
+    "Weight": 0.4414
+  },
+  {
+    "From": "TFMA",
+    "To": "DMA",
+    "Weight": 0.45
+  },
+  {
+    "From": "MA",
+    "To": "MMA",
+    "Weight": 0.4503
+  },
+  {
+    "From": "MMA",
+    "To": "St",
+    "Weight": 0.4753
+  },
+  {
+    "From": "MA",
+    "To": "TFMA",
+    "Weight": 0.55
+  },
+  {
+    "From": "St",
+    "To": "tBA",
+    "Weight": 0.64
+  },
+  {
+    "From": "nBA",
+    "To": "HFBA",
+    "Weight": 0.6887
+  },
+  {
+    "From": "St",
+    "To": "nBA",
+    "Weight": 0.6956
+  },
+  {
+    "From": "St",
+    "To": "MA",
+    "Weight": 0.7054
+  },
+  {
+    "From": "tBA",
+    "To": "nBA",
+    "Weight": 0.709
+  },
+  {
+    "From": "HFBA",
+    "To": "MA",
+    "Weight": 0.731
+  },
+  {
+    "From": "MA",
+    "To": "HFBA",
+    "Weight": 0.7363
+  },
+  {
+    "From": "nBA",
+    "To": "MA",
+    "Weight": 0.7411
+  },
+  {
+    "From": "iBVE",
+    "To": "VAc",
+    "Weight": 0.7462
+  },
+  {
+    "From": "TFMA",
+    "To": "MMA",
+    "Weight": 0.81
+  },
+  {
+    "From": "nBA",
+    "To": "tBA",
+    "Weight": 0.831
+  },
+  {
+    "From": "MMA",
+    "To": "DMA",
+    "Weight": 0.8781
+  },
+  {
+    "From": "MA",
+    "To": "tBA",
+    "Weight": 0.899
+  },
+  {
+    "From": "tBA",
+    "To": "MA",
+    "Weight": 0.907
+  },
+  {
+    "From": "HFBA",
+    "To": "iBVE",
+    "Weight": 0.9073
+  },
+  {
+    "From": "MMA",
+    "To": "HFBA",
+    "Weight": 1.0776
+  },
+  {
+    "From": "VAc",
+    "To": "iBVE",
+    "Weight": 1.1303
+  },
+  {
+    "From": "MMA",
+    "To": "TFMA",
+    "Weight": 1.23
+  },
+  {
+    "From": "MA",
+    "To": "nBA",
+    "Weight": 1.3454
+  },
+  {
+    "From": "HFBA",
+    "To": "nBA",
+    "Weight": 1.4696
+  },
+  {
+    "From": "TFMA",
+    "To": "MA",
+    "Weight": 1.66
+  },
+  {
+    "From": "MMA",
+    "To": "MA",
+    "Weight": 1.7599
+  },
+  {
+    "From": "HFBA",
+    "To": "VAc",
+    "Weight": 1.9258
+  },
+  {
+    "From": "nBA",
+    "To": "iBVE",
+    "Weight": 2.2923
+  },
+  {
+    "From": "TFMA",
+    "To": "iBVE",
+    "Weight": 2.43
+  },
+  {
+    "From": "MMA",
+    "To": "tBA",
+    "Weight": 2.539
+  },
+  {
+    "From": "MMA",
+    "To": "nBA",
+    "Weight": 2.6076
+  },
+  {
+    "From": "nBA",
+    "To": "VAc",
+    "Weight": 3.3257
+  },
+  {
+    "From": "St",
+    "To": "DMA",
+    "Weight": 3.3553
+  },
+  {
+    "From": "MA",
+    "To": "iBVE",
+    "Weight": 4.6413
+  },
+  {
+    "From": "tBA",
+    "To": "VAc",
+    "Weight": 4.947
+  },
+  {
+    "From": "MA",
+    "To": "VAc",
+    "Weight": 5.9579
+  },
+  {
+    "From": "TFMA",
+    "To": "VAc",
+    "Weight": 9.28
+  },
+  {
+    "From": "DMA",
+    "To": "VAc",
+    "Weight": 10.1613
+  },
+  {
+    "From": "MMA",
+    "To": "iBVE",
+    "Weight": 12.1508
+  },
+  {
+    "From": "DMA",
+    "To": "iBVE",
+    "Weight": 13.8614
+  },
+  {
+    "From": "MMA",
+    "To": "VAc",
+    "Weight": 18.6941
+  },
+  {
+    "From": "St",
+    "To": "VAc",
+    "Weight": 42.7498
+  },
+  {
+    "From": "St",
+    "To": "iBVE",
+    "Weight": 54.6929
+  }
+]
