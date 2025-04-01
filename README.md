@@ -29,11 +29,7 @@ Check out the live demo of the **RatioGen** platform on Streamlit:
 
 You can use the **RatioGen** platform directly via the Streamlit app or deploy the model locally by following these steps:
 
-### Requirements
-- Python 3.8+
-- Streamlit
-- TensorFlow / PyTorch (depending on the model)
-- Other required libraries (see `requirements.txt`)
+### Requirements(see `requirements.txt`)
 
 ### Install Dependencies
 
