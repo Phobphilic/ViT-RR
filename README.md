@@ -1,6 +1,6 @@
 # RatioGen: ML-Based Reactivity Ratio Determination for Copolymerizations
 
-**RatioGen** is an efficient and versatile machine learning (ML)-based platform for determining reactivity ratios in copolymerizations. By integrating deep learning models trained on millions of "reactivity ratio fingerprints" (*r*FPs), **RatioGen** enables fast, accurate, and convenient determination of reactivity ratios in both binary and ternary copolymerizations from sparse experimental data.
+**RatioGen** is a machine learning (ML)-based platform for determining reactivity ratios in copolymerizations. By integrating deep learning models trained on millions of "reactivity ratio fingerprints" (*r*FPs), **RatioGen** simplifies and accelerates the process of determining reactivity ratios in both binary and ternary copolymerizations from sparse experimental data.
 
 This tool provides a user-friendly interface deployed through Streamlit, making it easy to explore the reactivity ratios for a wide variety of monomer combinations under varying conditions. By simply inputting experimental data, users can instantly predict the corresponding reactivity ratios.
 
@@ -8,22 +8,20 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 
 ## Key Features
 
-- **Instant Prediction**: Predict reactivity ratios for copolymerizations from sparse experimental data (e.g., random monomer combinations, arbitrary feed ratios, conversion data) in milliseconds.
+- **Versatility**: Analyze a broad range of monomer combinations with arbitrary feed ratios and conversion data under different reaction conditions, enabling sequence regulation by adjusting factors like temperature and solvent.
 
+- **Easy to Use**: The **RatioGen** web service allows users to upload experimental data and instantly receive reactivity ratio predictions.
+  
 - **Interactive Platform**: Explore predicted reactivity ratios via interactive chord diagrams:
     - [r₁₂ Chord Diagram](https://codepen.io/Phobphilic/full/ZYzbpJV)
     - [r₂₁ Chord Diagram](https://codepen.io/Phobphilic/full/ogvGLgG)
-
-- **Versatility**: Analyze a broad range of monomer combinations under different reaction conditions, enabling sequence regulation by adjusting factors like temperature and solvent.
-
-- **Easy to Use**: Streamlined interface to upload experimental data and instantly receive reactivity ratio predictions.
 
 ---
 
 ## Live Demo
 
 Check out the live demo of the **RatioGen** platform on Streamlit:  
-[**RatioGen Demo**](https://ratiogen.streamlit.app/)
+[**RatioGen web service**](https://ratiogen.streamlit.app/)
 
 ---
 
