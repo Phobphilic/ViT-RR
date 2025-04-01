@@ -9,6 +9,13 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 **Interactive Platform**: Explore predicted reactivity ratios via interactive chord diagrams (https://codepen.io/Phobphilic/pen/ZYzbpJV for *r*<sub>12</sub>; 
 https://codepen.io/Phobphilic/pen/ogvGLgG for *r*<sub>21</sub>).
 
+<p class="codepen" data-height="300" data-default-tab="html,result" data-slug-hash="ZYzbpJV" data-pen-title="Chord" data-user="Phobphilic" style="height: 300px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid; margin: 1em 0; padding: 1em;">
+  <span>See the Pen <a href="https://codepen.io/Phobphilic/pen/ZYzbpJV">
+  Chord</a> by Phobphilic (<a href="https://codepen.io/Phobphilic">@Phobphilic</a>)
+  on <a href="https://codepen.io">CodePen</a>.</span>
+</p>
+<script async src="https://public.codepenassets.com/embed/index.js"></script>
+
 **Versatility**: Analyze a broad range of monomer combinations under different reaction conditions, enabling sequence regulation by adjusting factors like temperature and solvent.
 
 **Easy to Use**: Streamlined interface to upload experimental data and instantly provide reactivity ratio predictions.
