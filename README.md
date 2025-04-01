@@ -1,4 +1,4 @@
-# RatioGen: ML-Based Reactivity Ratio Prediction for Copolymerizations
+# RatioGen: ML-Based Reactivity Ratio Determination for Copolymerizations
 
 **RatioGen** is an efficient and versatile machine learning (ML)-based platform for determining reactivity ratios in copolymerizations. By integrating deep learning models trained on millions of "reactivity ratio fingerprints" (*r*FPs), **RatioGen** enables fast, accurate, and convenient determination of reactivity ratios in both binary and ternary copolymerizations from sparse experimental data.
 
