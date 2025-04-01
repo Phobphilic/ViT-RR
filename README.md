@@ -57,11 +57,11 @@ This will open the app in your default web browser, where you can start inputtin
 ---
 
 # How It Works
-**RatioGen** uses Vision Transformer-based models trained on datasets of *r*FPs for both binary and ternary copolymerizations. The models utilizes experimental inputs (arbitrary feed ratios and conversion data of a monomer combination), then automatically integrate these copolymerization results into an rFP matrix and instantly predict corresponding reactivity ratios. The predicted reactivity ratios can be used to better understand and regulate monomer sequences in copolymerization processes.
+**RatioGen** uses Vision Transformer-based models trained on datasets of *r*FPs for both binary and ternary copolymerizations. The models utilizes experimental inputs (arbitrary feed ratios and conversion data of a monomer combination), then automatically integrate these copolymerization results into an *r*FP matrix and instantly predict corresponding reactivity ratios. The predicted reactivity ratios can be used to better understand and regulate monomer sequences in copolymerization processes.
 
 # Examples
 - **Example Input:**
-  - Binay (Styrene (St)-Methyl Methacrylate (MMA))
+  - Binary (Styrene (St) - Methyl Methacrylate (MMA))
   - Ternary (2,2,3,4,4,4-hexafluorobutyl acrylate (HFBA)-St-MMA)
 
 - **Feed Ratios**: Varying from 0.01 to 0.99 for different monomers
