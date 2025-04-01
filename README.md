@@ -29,7 +29,7 @@ Check out the live demo of the **RatioGen** platform on Streamlit:
 
 You can use the **RatioGen** platform directly via the Streamlit app or deploy the model locally by following these steps:
 
-### Requirements(see `requirements.txt`)
+### Requirements (see `requirements.txt`)
 
 ### Install Dependencies
 
@@ -55,7 +55,7 @@ This will open the app in your default web browser, where you can start inputtin
 
 # Examples
 - **Example Input:**
-  - Binary (Styrene (St) - Methyl Methacrylate (MMA))
+  - Binary (Styrene (St)-Methyl Methacrylate (MMA))
   - Ternary (2,2,3,4,4,4-hexafluorobutyl acrylate (HFBA)-St-MMA)
 
 - **Feed Ratios**: Varying from 0.01 to 0.99 for different monomers
