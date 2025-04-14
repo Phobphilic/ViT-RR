@@ -65,4 +65,4 @@ This will open the app in your default web browser, where you can start inputtin
 **Example Output:**
 - **Binary Reactivity Ratios** (e.g., *r*<sub>12</sub> = 0.40, *r*<sub>21</sub> = 0.35 for St-MMA)
 
-- **Ternary Reactivity Ratios** (e.g., *r*<sub>12</sub> = 0.04, *r*<sub>21</sub> = 0.03, *r*<sub>13</sub> = 0.10, *r*<sub>31</sub> = 1.47, *r*<sub>23</sub> = 0.26, *r*<sub>32</sub> = 0.12)
+- **Ternary Reactivity Ratios** (e.g., *r*<sub>12</sub> = 0.04, *r*<sub>21</sub> = 0.03, *r*<sub>13</sub> = 0.10, *r*<sub>31</sub> = 1.47, *r*<sub>23</sub> = 0.26, *r*<sub>32</sub> = 0.12 for HFBA-St-MMA)
