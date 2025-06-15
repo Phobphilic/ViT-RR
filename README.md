@@ -23,6 +23,8 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 Check out the live demo of the **RatioGen** platform on Streamlit:  
 [**RatioGen web service**](https://ratiogen.streamlit.app/)
 
+**Note: If this is your first time accessing the app, please allow 30 seconds to 2 minutes for the model to load and initialize.**
+
 ---
 
 ## Installation and Usage
