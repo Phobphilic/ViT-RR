@@ -1,4 +1,4 @@
-# RatioGen: ML-Based Reactivity Ratio Determination for Copolymerizations
+# ML-Based Reactivity Ratio Determination for Copolymerizations
 
 **RatioGen** is a machine learning (ML)-based platform for determining reactivity ratios in copolymerizations. By integrating deep learning models trained on millions of "reactivity ratio fingerprints" (*r*FPs), **RatioGen** simplifies and accelerates the process of determining reactivity ratios in both binary and ternary copolymerizations from sparse experimental data.
 
@@ -15,15 +15,6 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 - **Interactive Platform**: Explore predicted reactivity ratios via interactive chord diagrams:
     - [r₁₂ Chord Diagram](https://codepen.io/Phobphilic/full/ZYzbpJV)
     - [r₂₁ Chord Diagram](https://codepen.io/Phobphilic/full/ogvGLgG)
-
----
-
-## Live Demo
-
-Check out the live demo of the **RatioGen** platform on Streamlit:  
-[**RatioGen web service**](https://ratiogen.streamlit.app/)
-
-**Note: If this is your first time accessing the app, please allow 30 seconds to 2 minutes for the model to load and initialize.**
 
 ---
 
