@@ -9,7 +9,7 @@ import os
 IMG_SIZE = 64
 
 # Set up page configuration
-st.set_page_config(layout="wide", page_title="RatioGen: Sequence Prediction")
+st.set_page_config(layout="wide", page_title="RatioGen: Reactivity Ratio Determination Model")
 
 def add_custom_css():
     css = """
@@ -63,7 +63,6 @@ def register_user():
     # Load existing registrations if available
     if os.path.exists(filename):
         df = pd.read_csv(filename)
-        # Check if the current user is already registered
         if email in df['Email'].values:
             st.session_state['registered'] = True
             st.sidebar.success("You are already registered and may continue to use the app.")
@@ -101,7 +100,7 @@ def predict_model(model, data, data_transform_function, img_size):
 
 def main():
     add_custom_css()
-    st.title('Reactivity Ratio Determination Model')
+    st.title('RatioGen: Reactivity Ratio Determination Model')
     if 'registered' not in st.session_state:
         st.session_state['registered'] = False
     register_user()
