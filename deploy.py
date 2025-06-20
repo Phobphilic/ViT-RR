@@ -9,7 +9,7 @@ import os
 IMG_SIZE = 64
 
 # Set up page configuration
-st.set_page_config(layout="wide", page_title="Reactivity Ratio Determination Model")
+st.set_page_config(layout="wide", page_title="RatioGen: Sequence Prediction")
 
 def add_custom_css():
     css = """
