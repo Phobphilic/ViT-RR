@@ -87,7 +87,7 @@ def show_registrations():
         total_users = len(df)
         st.sidebar.write(f"Total users registered: {total_users}")
 
-def predict_model(model, data, data_transform_function, img_size, n_iter=20, noise_level=0.01):
+def predict_model(model, data, data_transform_function, img_size, n_iter=20, noise_level=0.03):
     """
     Bootstrap Sampling: Add noise to input and run multiple predictions to estimate uncertainty.
     Returns: mean predictions and standard deviations (error margins).
