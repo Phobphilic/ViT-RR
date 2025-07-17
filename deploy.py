@@ -87,12 +87,35 @@ def show_registrations():
         total_users = len(df)
         st.sidebar.write(f"Total users registered: {total_users}")
 
-def predict_model(model, data, data_transform_function, img_size):
+def predict_model(model, data, data_transform_function, img_size, n_iter=20, noise_level=0.01):
+    """
+    Bootstrap Sampling: Add noise to input and run multiple predictions to estimate uncertainty.
+    Returns: mean predictions and standard deviations (error margins).
+    """
     try:
-        img_tensor = data_transform_function(np.array(data), img_size=img_size)
-        pred = model(img_tensor.unsqueeze(0))
-        pred_values = np.power(10, pred.squeeze(0).tolist())  # Convert log predictions back to original scale
-        return pred_values
+        predictions = []
+
+        for _ in range(n_iter):
+            noisy_data = []
+            for row in data:
+                perturbed_row = [
+                    x + np.random.normal(0, noise_level * max(abs(x), 1e-6)) if x is not None else 0.0
+                    for x in row
+                ]
+                noisy_data.append(perturbed_row)
+
+            img_tensor = data_transform_function(np.array(noisy_data), img_size=img_size)
+            with torch.no_grad():
+                pred = model(img_tensor.unsqueeze(0))
+                pred_values = np.power(10, pred.squeeze(0).tolist())  # log10 to original scale
+                predictions.append(pred_values)
+
+        predictions = np.array(predictions)
+        mean_pred = predictions.mean(axis=0)
+        std_pred = predictions.std(axis=0)
+
+        return mean_pred, std_pred
+
     except Exception as e:
         st.error(f"Prediction failed with error: {e}")
         st.write(f"Data shape: {np.array(data).shape}")
@@ -154,13 +177,13 @@ def handle_model_interaction():
                         st.error("Failed to read Excel file. Please try the example format.")
 
             if data_list and st.button(f'Predict({st.session_state.model_type})'):
-                prediction = predict_model(
+                mean_pred, std_pred = predict_model(
                     binary_model if st.session_state.model_type == 'Binary' else ternary_model,
                     data_list,
                     transform if st.session_state.model_type == 'Binary' else transform_ternary,
                     IMG_SIZE)
-                if prediction is not None:
-                    display_results(prediction, st.session_state.model_type.lower())
+                if mean_pred is not None and std_pred is not None:
+                    display_results(mean_pred, std_pred, st.session_state.model_type.lower())
 
 
 def collect_data(num_sets, model_type):
@@ -176,22 +199,25 @@ def collect_data(num_sets, model_type):
             data_list.append([f1, f2, total_conv, conv1, conv2, conv3] if model_type == 'ternary' else [f1, total_conv, conv1, conv2])
     return data_list
 
-def display_results(pred_values, model_type):
+def display_results(mean_pred, std_pred, model_type):
     with st.container():
         st.write(f"Results ({model_type.title()})")
+
         if model_type == 'binary':
             results_html = f"""
             <div>
-                <p>r1 = {pred_values[0]:.2f}, r2 = {pred_values[1]:.2f}</p>
+                <p>r1 = {mean_pred[0]:.2f} ± {std_pred[0]:.2f}</p>
+                <p>r2 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
             </div>
             """
             st.markdown(results_html, unsafe_allow_html=True)
+
         elif model_type == 'ternary':
             results_html = f"""
             <div>
-                <p>r12 = {pred_values[0]:<5.2f}, r21 = {pred_values[1]:<5.2f}</p>
-                <p>r13 = {pred_values[2]:<5.2f}, r31 = {pred_values[3]:<5.2f}</p>
-                <p>r23 = {pred_values[4]:<5.2f}, r32 = {pred_values[5]:<5.2f}</p>
+                <p>r12 = {mean_pred[0]:.2f} ± {std_pred[0]:.2f}, r21 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
+                <p>r13 = {mean_pred[2]:.2f} ± {std_pred[2]:.2f}, r31 = {mean_pred[3]:.2f} ± {std_pred[3]:.2f}</p>
+                <p>r23 = {mean_pred[4]:.2f} ± {std_pred[4]:.2f}, r32 = {mean_pred[5]:.2f} ± {std_pred[5]:.2f}</p>
             </div>
             """
             st.markdown(results_html, unsafe_allow_html=True)
