@@ -206,8 +206,8 @@ def display_results(mean_pred, std_pred, model_type):
         if model_type == 'binary':
             results_html = f"""
             <div>
-                <p>r1 = {mean_pred[0]:.3f} ± {std_pred[0]:.3f}</p>
-                <p>r2 = {mean_pred[1]:.3f} ± {std_pred[1]:.3f}</p>
+                <p>r1 = {mean_pred[0]:.2f} ± {std_pred[0]:.2f}</p>
+                <p>r2 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
             </div>
             """
             st.markdown(results_html, unsafe_allow_html=True)
@@ -215,9 +215,9 @@ def display_results(mean_pred, std_pred, model_type):
         elif model_type == 'ternary':
             results_html = f"""
             <div>
-                <p>r12 = {mean_pred[0]:.3f} ± {std_pred[0]:.3f}, r21 = {mean_pred[1]:.3f} ± {std_pred[1]:.3f}</p>
-                <p>r13 = {mean_pred[2]:.3f} ± {std_pred[2]:.3f}, r31 = {mean_pred[3]:.3f} ± {std_pred[3]:.3f}</p>
-                <p>r23 = {mean_pred[4]:.3f} ± {std_pred[4]:.3f}, r32 = {mean_pred[5]:.3f} ± {std_pred[5]:.3f}</p>
+                <p>r12 = {mean_pred[0]:.2f} ± {std_pred[0]:.2f}, r21 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
+                <p>r13 = {mean_pred[2]:.2f} ± {std_pred[2]:.2f}, r31 = {mean_pred[3]:.2f} ± {std_pred[3]:.2f}</p>
+                <p>r23 = {mean_pred[4]:.2f} ± {std_pred[4]:.2f}, r32 = {mean_pred[5]:.2f} ± {std_pred[5]:.2f}</p>
             </div>
             """
             st.markdown(results_html, unsafe_allow_html=True)
