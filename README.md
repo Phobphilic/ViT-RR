@@ -5,6 +5,11 @@ We provide a machine learning (ML)-based platform for determining reactivity rat
 This tool provides a user-friendly interface deployed through Streamlit, making it easy to explore the reactivity ratios for a wide variety of monomer combinations under varying conditions. By simply inputting experimental data, users can instantly predict the corresponding reactivity ratios.
 
 ---
+## Database
+2D and 3D *r*FPs can be downloaded:
+
+
+---
 
 ## Key Features
 
@@ -19,7 +24,7 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 
 ## Installation and Usage
 
-You can use the determination platform directly via the Streamlit app or deploy the model locally by following these steps:
+You can use the determination platform by deploy the model locally. Please follow these steps:
 
 ### Requirements (see `requirements.txt`)
 
