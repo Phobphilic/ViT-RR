@@ -6,19 +6,21 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 
 ---
 ## Database
-2D and 3D *r*FPs can be downloaded:
+2D and 3D *r*FPs can be downloaded from the open repository:
 
+  - [*r*FP Database](https://zenodo.org/uploads/16148938)
 
 ---
 
 ## Key Features
 
-- **Versatility**: Analyze a broad range of monomer combinations with arbitrary feed ratios and conversion data under different reaction conditions, enabling sequence regulation by adjusting factors like temperature and solvent.
+ **Versatility**: Analyze a broad range of monomer combinations with arbitrary feed ratios and conversion data under different reaction conditions, enabling sequence regulation by adjusting factors like temperature and solvent.
 
-- **Easy to Use**: The determination web service allows users to upload experimental data and instantly receive reactivity ratio predictions.
+**Easy to Use**: The determination web service allows users to upload experimental data and instantly receive reactivity ratio predictions.
   
-- **Interactive Platform**: Explore predicted reactivity ratios via interactive chord diagrams:
-    - [r Chord Diagram](https://codepen.io/Phobphilic/full/ZYzbpJV)
+**Interactive Platform**: Explore predicted reactivity ratios via interactive chord diagrams:
+  
+  - [*r* Chord Diagram](https://codepen.io/Phobphilic/full/ZYzbpJV)
 
 ---
 
