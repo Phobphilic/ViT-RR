@@ -13,8 +13,7 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 - **Easy to Use**: The **RatioGen** web service allows users to upload experimental data and instantly receive reactivity ratio predictions.
   
 - **Interactive Platform**: Explore predicted reactivity ratios via interactive chord diagrams:
-    - [r₁₂ Chord Diagram](https://codepen.io/Phobphilic/full/ZYzbpJV)
-    - [r₂₁ Chord Diagram](https://codepen.io/Phobphilic/full/ogvGLgG)
+    - [r Chord Diagram](https://codepen.io/Phobphilic/full/ZYzbpJV)
 
 ---
 
