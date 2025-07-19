@@ -5,10 +5,7 @@ import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
 import os
 
-# Constants
 IMG_SIZE = 64
-
-# Set up page configuration
 st.set_page_config(layout="wide", page_title="RatioGen: Reactivity Ratio Determination Model")
 
 def add_custom_css():
@@ -60,7 +57,6 @@ def register_user():
     username = st.sidebar.text_input("Username")
     email = st.sidebar.text_input("Email")
     filename = "user_registrations.csv"
-    # Load existing registrations if available
     if os.path.exists(filename):
         df = pd.read_csv(filename)
         if email in df['Email'].values:
@@ -84,22 +80,26 @@ def show_registrations():
     filename = "user_registrations.csv"
     if os.path.exists(filename):
         df = pd.read_csv(filename)
-        total_users = len(df)
-        st.sidebar.write(f"Total users registered: {total_users}")
+        st.sidebar.write(f"Total users registered: {len(df)}")
 
-def predict_model(model, data, data_transform_function, img_size, n_iter=20, noise_level=0.01):
-    """
-    Bootstrap Sampling: Add noise to input and run multiple predictions to estimate uncertainty.
-    Returns: mean predictions and standard deviations (error margins).
-    """
+def predict_model(model, data, data_transform_function, img_size, n_iter=20, noise_level=0.01, use_bootstrap=True):
     try:
-        predictions = []
+        if not use_bootstrap:
+            img_tensor = data_transform_function(np.array(data), img_size=img_size)
+            with torch.no_grad():
+                pred = model(img_tensor.unsqueeze(0))
+                pred_values = np.power(10, pred.squeeze(0).tolist())
+            return pred_values, np.zeros_like(pred_values)
 
+        seed = int(np.sum([np.sum(row) for row in data]) * 1e6) % (2**32 - 1)
+        rng = np.random.default_rng(seed)
+        
+        predictions = []
         for _ in range(n_iter):
             noisy_data = []
             for row in data:
                 perturbed_row = [
-                    x + np.random.normal(0, noise_level * max(abs(x), 1e-6)) if x is not None else 0.0
+                    x + rng.normal(0, noise_level * max(abs(x), 1e-6)) if x is not None else 0.0
                     for x in row
                 ]
                 noisy_data.append(perturbed_row)
@@ -107,15 +107,11 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=20, noi
             img_tensor = data_transform_function(np.array(noisy_data), img_size=img_size)
             with torch.no_grad():
                 pred = model(img_tensor.unsqueeze(0))
-                pred_values = np.power(10, pred.squeeze(0).tolist())  # log10 to original scale
+                pred_values = np.power(10, pred.squeeze(0).tolist())
                 predictions.append(pred_values)
 
         predictions = np.array(predictions)
-        mean_pred = predictions.mean(axis=0)
-        std_pred = predictions.std(axis=0)
-
-        return mean_pred, std_pred
-
+        return predictions.mean(axis=0), predictions.std(axis=0)
     except Exception as e:
         st.error(f"Prediction failed with error: {e}")
         st.write(f"Data shape: {np.array(data).shape}")
@@ -134,9 +130,11 @@ def main():
         if col1.button('Binary Model'):
             st.session_state.model_type = 'Binary'
             st.session_state.input_method = None
+            st.session_state.trigger_prediction = False
         if col2.button('Ternary Model'):
             st.session_state.model_type = 'Ternary'
             st.session_state.input_method = None
+            st.session_state.trigger_prediction = False
 
         if st.session_state.get('model_type'):
             st.write(f"You selected the {st.session_state.model_type} model.")
@@ -145,46 +143,56 @@ def main():
             handle_model_interaction()
 
 def handle_model_interaction():
-        col1, col2 = st.columns(2)
-        if col1.button('Manual Data Entry'):
-            st.session_state.input_method = 'Manual'
-            st.write("Input data as decimals in the range [0,1]")
-        if col2.button('Upload Excel File'):
-            st.session_state.input_method = 'Excel'
-            if st.session_state.model_type == 'Binary':
-                st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
-            elif st.session_state.model_type == 'Ternary':
-                st.image("excel_format_ternary.png", caption="Excel format example for Ternary Model")
+    col1, col2 = st.columns(2)
+    if col1.button('Manual Data Entry'):
+        st.session_state.input_method = 'Manual'
+    if col2.button('Upload Excel File'):
+        st.session_state.input_method = 'Excel'
+        if st.session_state.model_type == 'Binary':
+            st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
+        elif st.session_state.model_type == 'Ternary':
+            st.image("excel_format_ternary.png", caption="Excel format example for Ternary Model")
 
-        if st.session_state.input_method:
-            data_list = []
+    if st.session_state.input_method:
+        data_list = []
 
-            if st.session_state.input_method == 'Manual':
-                num_sets = st.number_input('Number of data sets', min_value=1, value=1, step=1)
-                data_list = collect_data(num_sets, st.session_state.model_type.lower())
+        if st.session_state.input_method == 'Manual':
+            num_sets = st.number_input('Number of data sets', min_value=1, value=1, step=1)
+            data_list = collect_data(num_sets, st.session_state.model_type.lower())
 
-            elif st.session_state.input_method == 'Excel':
-                file = st.file_uploader("Upload Excel file", type=['xlsx'])
-                if file:
-                    try:
-                        data_df = pd.read_excel(file, index_col=0)
-                        data_list = data_df.values.tolist()
-                        if not data_list:
-                            st.error("Excel file is empty or formatted incorrectly.")
-                        else:
-                            st.success("Excel file has been loaded successfully.")
-                    except Exception as e:
-                        st.error("Failed to read Excel file. Please try the example format.")
+        elif st.session_state.input_method == 'Excel':
+            file = st.file_uploader("Upload Excel file", type=['xlsx'])
+            if file:
+                try:
+                    data_df = pd.read_excel(file, index_col=0)
+                    data_list = data_df.values.tolist()
+                    if not data_list:
+                        st.error("Excel file is empty or formatted incorrectly.")
+                    else:
+                        st.success("Excel file has been loaded successfully.")
+                except Exception as e:
+                    st.error("Failed to read Excel file. Please try the example format.")
 
-            if data_list and st.button(f'Predict({st.session_state.model_type})'):
-                mean_pred, std_pred = predict_model(
-                    binary_model if st.session_state.model_type == 'Binary' else ternary_model,
-                    data_list,
-                    transform if st.session_state.model_type == 'Binary' else transform_ternary,
-                    IMG_SIZE)
-                if mean_pred is not None and std_pred is not None:
-                    display_results(mean_pred, std_pred, st.session_state.model_type.lower())
+        use_bootstrap = st.checkbox("Use Bootstrap Sampling for Error Estimation", value=True)
 
+        if data_list:
+            if st.button(f'Predict({st.session_state.model_type})'):
+                st.session_state.trigger_prediction = True
+                st.session_state.last_data = data_list
+                st.session_state.use_bootstrap = use_bootstrap
+
+        if st.session_state.get('trigger_prediction', False):
+            model = binary_model if st.session_state.model_type == 'Binary' else ternary_model
+            transform_fn = transform if st.session_state.model_type == 'Binary' else transform_ternary
+            mean_pred, std_pred = predict_model(
+                model,
+                st.session_state.last_data,
+                transform_fn,
+                IMG_SIZE,
+                use_bootstrap=st.session_state.use_bootstrap
+            )
+            display_results(mean_pred, std_pred, st.session_state.model_type.lower())
+            st.session_state.trigger_prediction = False
 
 def collect_data(num_sets, model_type):
     data_list = []
@@ -202,7 +210,6 @@ def collect_data(num_sets, model_type):
 def display_results(mean_pred, std_pred, model_type):
     with st.container():
         st.write(f"Results ({model_type.title()})")
-
         if model_type == 'binary':
             results_html = f"""
             <div>
@@ -210,8 +217,6 @@ def display_results(mean_pred, std_pred, model_type):
                 <p>r2 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
             </div>
             """
-            st.markdown(results_html, unsafe_allow_html=True)
-
         elif model_type == 'ternary':
             results_html = f"""
             <div>
@@ -220,7 +225,7 @@ def display_results(mean_pred, std_pred, model_type):
                 <p>r23 = {mean_pred[4]:.2f} ± {std_pred[4]:.2f}, r32 = {mean_pred[5]:.2f} ± {std_pred[5]:.2f}</p>
             </div>
             """
-            st.markdown(results_html, unsafe_allow_html=True)
+        st.markdown(results_html, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
