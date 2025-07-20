@@ -8,7 +8,7 @@ This tool provides a user-friendly interface deployed through Streamlit, making 
 ## Database
 2D and 3D *r*FPs can be downloaded from the open repository:
 
-  - [*r*FP Database](https://zenodo.org/uploads/16148938)
+  - [*r*FP Database](https://drive.google.com/drive/folders/1aq_InaBfkSv5FvYbsVeEqaUL68GLjqW-?usp=sharing)
 
 ---
 
