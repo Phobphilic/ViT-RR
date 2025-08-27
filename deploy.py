@@ -86,7 +86,6 @@ def show_registrations():
 def predict_model(model, data, data_transform_function, img_size, n_iter=200, use_bootstrap=True, df=None):
     try:
         if not use_bootstrap:
-            # 直接预测，无不确定度
             img_tensor = data_transform_function(np.array(data), img_size=img_size)
             with torch.no_grad():
                 pred = model(img_tensor.unsqueeze(0))
@@ -102,7 +101,7 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
             noisy_data = []
             for row in data:
                 perturbed_row = [
-                    x + rng.normal(0, 0.05 * max(abs(x), 1e-6)) if x is not None else 0.0
+                    x + rng.normal(0, 0.03 * max(abs(x), 1e-6)) if x is not None else 0.0
                     for x in row
                 ]
                 noisy_data.append(perturbed_row)
@@ -120,7 +119,7 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
         cov_matrix = np.cov(predictions, rowvar=False)
 
         if df is None:
-            df = len(mean_pred)  # 二元=2，三元=6
+            df = len(mean_pred)
 
         chi2_val = chi2.ppf(0.95, df=df)
         jci_half_width = np.sqrt(np.diag(cov_matrix) * chi2_val)
