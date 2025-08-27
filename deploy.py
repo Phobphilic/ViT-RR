@@ -112,7 +112,7 @@ def predict_binary_with_jci(model, data, n_iter=500):
             noisy_data = []
             for row in data:
                 perturbed_row = [
-                    x + rng.normal(0, 0.015 * max(abs(x), 1e-6)) if x is not None else 0.0
+                    x + rng.normal(0, 0.03 * max(abs(x), 1e-6)) if x is not None else 0.0
                     for x in row
                 ]
                 noisy_data.append(perturbed_row)
@@ -134,59 +134,51 @@ def predict_binary_with_jci(model, data, n_iter=500):
         st.error(f"Prediction failed with error: {e}")
         raise
 
-# -----------------------------
-# Visualization of JCI Ellipse
-# -----------------------------
-def plot_jci(predictions, mean_pred, ellipse_points):
+# ================================
+# Plotting function (JCI ellipse only)
+# ================================
+def plot_jci(mean_pred, ellipse_x, ellipse_y):
     """
-    Plot bootstrap points, Fisher-based JCI ellipse, and predicted point.
+    Plot JCI ellipse for binary model with center point and dashed boundary.
     """
     plt.figure(figsize=(6, 6))
-    plt.scatter(predictions[:, 0], predictions[:, 1], alpha=0.3, label="Bootstrap Samples")
-    plt.plot(ellipse_points[:, 0], ellipse_points[:, 1], 'r-', lw=2, label="95% JCI Ellipse")
-    plt.scatter(mean_pred[0], mean_pred[1], color="black", s=60, label="Predicted Point")
-    plt.xlabel("r1")
-    plt.ylabel("r2")
-    plt.title("Fisher-based JCI Ellipse (Binary Model)")
+    plt.plot(ellipse_x, ellipse_y, 'b--', label='95% JCI Ellipse')  # dashed ellipse boundary
+    plt.scatter(mean_pred[0], mean_pred[1], color='red', label='Central Prediction', zorder=5)
+    plt.xlabel('r1', fontsize=12)
+    plt.ylabel('r2', fontsize=12)
+    plt.title('Joint Confidence Interval (Fisher-based)')
     plt.legend()
     plt.grid(True)
+    st.pyplot(plt)
 
-    # Save to BytesIO for Streamlit
-    buf = BytesIO()
-    plt.savefig(buf, format="png", dpi=300, bbox_inches="tight")
-    plt.close()
-    buf.seek(0)
-    return buf
-
-# -----------------------------
-# Streamlit UI
-# -----------------------------
+# ================================
+# Streamlit app logic
+# ================================
 def main():
-    add_custom_css()
-    st.title("RatioGen: Binary Model with Fisher-based JCI")
+    st.title("RatioGen: Reactivity Ratio Determination (Binary Model + Fisher-based JCI)")
 
-    # File upload
-    file = st.file_uploader("Upload Excel file for binary model", type=['xlsx'])
+    # File uploader
+    file = st.file_uploader("Upload Excel file with data", type=['xlsx'])
     if file:
         data_df = pd.read_excel(file, index_col=0)
-        st.write("### Uploaded Data")
+        st.write("Uploaded Data Preview:")
         st.dataframe(data_df)
+
         data_list = data_df.values.tolist()
 
-        if st.button('Run Prediction'):
-            with st.spinner("Running predictions and calculating Fisher-based JCI..."):
-                mean_pred, lower_bounds, upper_bounds, predictions, ellipse_points = predict_binary_with_jci(
-                    binary_model, data_list, n_iter=500
-                )
+        if st.button("Predict & Plot JCI"):
+            # Get prediction + JCI ellipse
+            mean_pred, ci_upper, ci_lower, ellipse_x, ellipse_y = predict_with_fisher_jci(
+                binary_model, data_list, transform
+            )
 
-                # Display results
-                st.subheader("Prediction Results")
-                st.write(f"**r1 = {mean_pred[0]:.3f} (+{upper_bounds[0]:.3f} / -{lower_bounds[0]:.3f})**")
-                st.write(f"**r2 = {mean_pred[1]:.3f} (+{upper_bounds[1]:.3f} / -{lower_bounds[1]:.3f})**")
+            # Show numeric results
+            st.subheader("Predicted Reactivity Ratios (Binary)")
+            st.write(f"r1 = {mean_pred[0]:.3f}  (+{ci_upper[0]-mean_pred[0]:.3f} / -{mean_pred[0]-ci_lower[0]:.3f})")
+            st.write(f"r2 = {mean_pred[1]:.3f}  (+{ci_upper[1]-mean_pred[1]:.3f} / -{mean_pred[1]-ci_lower[1]:.3f})")
 
-                # Plot JCI ellipse
-                buf = plot_jci(predictions, mean_pred, ellipse_points)
-                st.image(buf, caption="Fisher-based JCI Ellipse", use_column_width=True)
+            # Show JCI plot
+            plot_jci(mean_pred, ellipse_x, ellipse_y)
 
 if __name__ == '__main__':
     main()
