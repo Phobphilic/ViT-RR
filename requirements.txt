@@ -1,6 +1,8 @@
-torch==2.3.1
-numpy==1.24.3
-streamlit==1.37.0
-pandas==2.0.3
-openpyxl==3.1.2
-scipy>=1.10.0
+streamlit
+torch
+torchvision
+pandas
+numpy
+scipy
+matplotlib
+openpyxl
