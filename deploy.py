@@ -3,6 +3,7 @@ import numpy as np
 import streamlit as st
 import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
+from scipy.stats import chi2
 import os
 
 IMG_SIZE = 64
@@ -82,9 +83,10 @@ def show_registrations():
         df = pd.read_csv(filename)
         st.sidebar.write(f"Total users registered: {len(df)}")
 
-def predict_model(model, data, data_transform_function, img_size, n_iter=200, use_bootstrap=True):
+def predict_model(model, data, data_transform_function, img_size, n_iter=200, use_bootstrap=True, df=None):
     try:
         if not use_bootstrap:
+            # 直接预测，无不确定度
             img_tensor = data_transform_function(np.array(data), img_size=img_size)
             with torch.no_grad():
                 pred = model(img_tensor.unsqueeze(0))
@@ -114,11 +116,21 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
         predictions = np.array(predictions)
 
         mean_pred = np.mean(predictions, axis=0)
-        lower = np.percentile(predictions, 2.5, axis=0)
-        upper = np.percentile(predictions, 97.5, axis=0)
-        jci_half_width = (upper - lower) / 2
+
+        cov_matrix = np.cov(predictions, rowvar=False)
+
+        if df is None:
+            df = len(mean_pred)  # 二元=2，三元=6
+
+        chi2_val = chi2.ppf(0.95, df=df)
+        jci_half_width = np.sqrt(np.diag(cov_matrix) * chi2_val)
 
         return mean_pred, jci_half_width
+
+    except Exception as e:
+        st.error(f"Prediction failed with error: {e}")
+        st.write(f"Data shape: {np.array(data).shape}")
+        raise
 
     except Exception as e:
         st.error(f"Prediction failed with error: {e}")
