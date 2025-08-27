@@ -2,13 +2,20 @@ import torch
 import numpy as np
 import streamlit as st
 import pandas as pd
-from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
+import matplotlib.pyplot as plt
 from scipy.stats import f
+from model_utils import SimpViT, transform
 import os
+from io import BytesIO
 
-IMG_SIZE = 64
-st.set_page_config(layout="wide", page_title="RatioGen: Reactivity Ratio Determination Model")
+# -----------------------------
+# Streamlit Page Configurations
+# -----------------------------
+st.set_page_config(layout="wide", page_title="RatioGen Binary Model with Fisher-based JCI")
 
+# -----------------------------
+# Custom CSS
+# -----------------------------
 def add_custom_css():
     css = """
     <style>
@@ -32,218 +39,154 @@ def add_custom_css():
     """
     st.markdown(css, unsafe_allow_html=True)
 
-@st.cache_data
-def load_models():
-    binary_model = SimpViT()
-    ternary_model = SimpViT_3D()
+# -----------------------------
+# Load Binary Model
+# -----------------------------
+@st.cache_resource
+def load_binary_model():
+    model = SimpViT()
     binary_path = 'simpViT_binary.pth'
-    ternary_path = 'simpViT_ternary.pth'
     full_binary_path = os.path.join(os.path.dirname(__file__), binary_path)
-    full_ternary_path = os.path.join(os.path.dirname(__file__), ternary_path)
     try:
-        binary_model.load_state_dict(torch.load(full_binary_path, map_location=torch.device('cpu')))
-        ternary_model.load_state_dict(torch.load(full_ternary_path, map_location=torch.device('cpu')))
-        binary_model.eval()
-        ternary_model.eval()
+        model.load_state_dict(torch.load(full_binary_path, map_location=torch.device('cpu')))
+        model.eval()
+        st.success("Binary model loaded successfully.")
     except Exception as e:
-        st.error(f"Failed to load model with error: {e}")
-    return binary_model, ternary_model
+        st.error(f"Failed to load binary model: {e}")
+    return model
 
-binary_model, ternary_model = load_models()
+binary_model = load_binary_model()
 
-def register_user():
-    st.sidebar.title("User Registration")
-    st.sidebar.write("Please register to access the application features.")
-  
-    username = st.sidebar.text_input("Username")
-    email = st.sidebar.text_input("Email")
-    filename = "user_registrations.csv"
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-        if email in df['Email'].values:
-            st.session_state['registered'] = True
-            st.sidebar.success("You are already registered and may continue to use the app.")
-        else:
-            if st.sidebar.button("Register"):
-                new_data = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
-                df = pd.concat([df, new_data], ignore_index=True)
-                df.to_csv(filename, index=False)
-                st.session_state['registered'] = True
-                st.sidebar.success("Registration successful! You may now use the app.")
-    else:
-        if st.sidebar.button("Register"):
-            df = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
-            df.to_csv(filename, index=False)
-            st.session_state['registered'] = True
-            st.sidebar.success("Registration successful! You may now use the app.")
+# -----------------------------
+# Fisher-based JCI Calculation
+# -----------------------------
+def fisher_jci(predictions, alpha=0.05):
+    """
+    Calculate Fisher-based Joint Confidence Intervals (JCI).
+    Supports asymmetric intervals: pred +X / -Y.
+    """
+    # Number of bootstrap samples
+    n_samples = predictions.shape[0]
+    # Number of parameters (r1, r2)
+    p = predictions.shape[1]
 
-def show_registrations():
-    filename = "user_registrations.csv"
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-        st.sidebar.write(f"Total users registered: {len(df)}")
+    # Mean prediction
+    mean_pred = np.mean(predictions, axis=0)
 
-def predict_model(model, data, data_transform_function, img_size, n_iter=200, use_bootstrap=True, df=None):
+    # Covariance matrix
+    cov_matrix = np.cov(predictions, rowvar=False)
+
+    # Inverse covariance matrix
+    inv_cov = np.linalg.inv(cov_matrix)
+
+    # F-value for confidence region
+    f_val = f.ppf(1 - alpha, dfn=p, dfd=n_samples - p)
+
+    # JCI radius factor
+    jci_radius = np.sqrt(p * (n_samples - 1) / (n_samples - p) * f_val)
+
+    # Ellipse coordinates for visualization
+    theta = np.linspace(0, 2 * np.pi, 500)
+    unit_circle = np.stack([np.cos(theta), np.sin(theta)], axis=0)
+    ellipse_points = (np.linalg.cholesky(cov_matrix) @ unit_circle * jci_radius).T + mean_pred
+
+    # Asymmetric CI: compute max and min deviation along each axis
+    lower_bounds = mean_pred - np.min(predictions, axis=0)
+    upper_bounds = np.max(predictions, axis=0) - mean_pred
+
+    return mean_pred, lower_bounds, upper_bounds, ellipse_points
+
+# -----------------------------
+# Prediction + Bootstrap
+# -----------------------------
+def predict_binary_with_jci(model, data, n_iter=500):
+    """
+    Perform prediction using binary ML model with bootstrap-based Fisher JCI.
+    """
     try:
-        if not use_bootstrap:
-            img_tensor = data_transform_function(np.array(data), img_size=img_size)
-            with torch.no_grad():
-                pred = model(img_tensor.unsqueeze(0))
-            pred_values = np.power(10, pred.squeeze(0).tolist())
-            return pred_values, np.zeros_like(pred_values)
-
-        seed = int(np.sum([np.sum(row) for row in data]) * 1e6) % (2**32 - 1)
-        rng = np.random.default_rng(seed)
-
+        rng = np.random.default_rng(seed=42)
         predictions = []
 
         for _ in range(n_iter):
+            # Perturb data slightly for bootstrap sampling
             noisy_data = []
             for row in data:
                 perturbed_row = [
-                    x + rng.normal(0, 0.03 * max(abs(x), 1e-6)) if x is not None else 0.0
+                    x + rng.normal(0, 0.015 * max(abs(x), 1e-6)) if x is not None else 0.0
                     for x in row
                 ]
                 noisy_data.append(perturbed_row)
 
-            img_tensor = data_transform_function(np.array(noisy_data), img_size=img_size)
+            img_tensor = transform(np.array(noisy_data), img_size=64)
             with torch.no_grad():
                 pred = model(img_tensor.unsqueeze(0))
             pred_values = np.power(10, pred.squeeze(0).tolist())
             predictions.append(pred_values)
 
         predictions = np.array(predictions)
-        mean_pred = np.mean(predictions, axis=0)
-        cov_matrix = np.cov(predictions, rowvar=False)
 
-        if df is None:
-            df = len(mean_pred)
+        # Calculate Fisher-based JCI
+        mean_pred, lower_bounds, upper_bounds, ellipse_points = fisher_jci(predictions)
 
-        f_val = f.ppf(0.95, dfn=df, dfd=n_iter - df)
-        jci_half_width = np.sqrt(np.diag(cov_matrix) * df * f_val)
-
-        return mean_pred, jci_half_width
+        return mean_pred, lower_bounds, upper_bounds, predictions, ellipse_points
 
     except Exception as e:
         st.error(f"Prediction failed with error: {e}")
-        st.write(f"Data shape: {np.array(data).shape}")
         raise
 
+# -----------------------------
+# Visualization of JCI Ellipse
+# -----------------------------
+def plot_jci(predictions, mean_pred, ellipse_points):
+    """
+    Plot bootstrap points, Fisher-based JCI ellipse, and predicted point.
+    """
+    plt.figure(figsize=(6, 6))
+    plt.scatter(predictions[:, 0], predictions[:, 1], alpha=0.3, label="Bootstrap Samples")
+    plt.plot(ellipse_points[:, 0], ellipse_points[:, 1], 'r-', lw=2, label="95% JCI Ellipse")
+    plt.scatter(mean_pred[0], mean_pred[1], color="black", s=60, label="Predicted Point")
+    plt.xlabel("r1")
+    plt.ylabel("r2")
+    plt.title("Fisher-based JCI Ellipse (Binary Model)")
+    plt.legend()
+    plt.grid(True)
+
+    # Save to BytesIO for Streamlit
+    buf = BytesIO()
+    plt.savefig(buf, format="png", dpi=300, bbox_inches="tight")
+    plt.close()
+    buf.seek(0)
+    return buf
+
+# -----------------------------
+# Streamlit UI
+# -----------------------------
 def main():
     add_custom_css()
-    st.title('RatioGen: Reactivity Ratio Determination Model')
-    if 'registered' not in st.session_state:
-        st.session_state['registered'] = False
-    register_user()
-    show_registrations()
+    st.title("RatioGen: Binary Model with Fisher-based JCI")
 
-    if st.session_state['registered']:
-        col1, col2 = st.columns(2)
-        if col1.button('Binary Model'):
-            st.session_state.model_type = 'Binary'
-            st.session_state.input_method = None
-            st.session_state.trigger_prediction = False
-        if col2.button('Ternary Model'):
-            st.session_state.model_type = 'Ternary'
-            st.session_state.input_method = None
-            st.session_state.trigger_prediction = False
+    # File upload
+    file = st.file_uploader("Upload Excel file for binary model", type=['xlsx'])
+    if file:
+        data_df = pd.read_excel(file, index_col=0)
+        st.write("### Uploaded Data")
+        st.dataframe(data_df)
+        data_list = data_df.values.tolist()
 
-        if st.session_state.get('model_type'):
-            st.write(f"You selected the {st.session_state.model_type} model.")
-            st.header(f"Step 2: Input data for {st.session_state.model_type} model")
+        if st.button('Run Prediction'):
+            with st.spinner("Running predictions and calculating Fisher-based JCI..."):
+                mean_pred, lower_bounds, upper_bounds, predictions, ellipse_points = predict_binary_with_jci(
+                    binary_model, data_list, n_iter=500
+                )
 
-            handle_model_interaction()
+                # Display results
+                st.subheader("Prediction Results")
+                st.write(f"**r1 = {mean_pred[0]:.3f} (+{upper_bounds[0]:.3f} / -{lower_bounds[0]:.3f})**")
+                st.write(f"**r2 = {mean_pred[1]:.3f} (+{upper_bounds[1]:.3f} / -{lower_bounds[1]:.3f})**")
 
-def handle_model_interaction():
-    col1, col2 = st.columns(2)
-    if col1.button('Manual Data Entry'):
-        st.session_state.input_method = 'Manual'
-    if col2.button('Upload Excel File'):
-        st.session_state.input_method = 'Excel'
-        if st.session_state.model_type == 'Binary':
-            st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
-        elif st.session_state.model_type == 'Ternary':
-            st.image("excel_format_ternary.png", caption="Excel format example for Ternary Model")
-
-    if st.session_state.input_method:
-        data_list = []
-
-        if st.session_state.input_method == 'Manual':
-            num_sets = st.number_input('Number of data sets', min_value=1, value=1, step=1)
-            data_list = collect_data(num_sets, st.session_state.model_type.lower())
-
-        elif st.session_state.input_method == 'Excel':
-            file = st.file_uploader("Upload Excel file", type=['xlsx'])
-            if file:
-                try:
-                    data_df = pd.read_excel(file, index_col=0)
-                    data_list = data_df.values.tolist()
-                    if not data_list:
-                        st.error("Excel file is empty or formatted incorrectly.")
-                    else:
-                        st.success("Excel file has been loaded successfully.")
-                except Exception as e:
-                    st.error("Failed to read Excel file. Please try the example format.")
-
-        use_bootstrap = st.checkbox("Use Bootstrap Sampling for Error Estimation", value=True)
-
-        if data_list:
-            if st.button(f'Predict({st.session_state.model_type})'):
-                st.session_state.trigger_prediction = True
-                st.session_state.last_data = data_list
-                st.session_state.use_bootstrap = use_bootstrap
-
-        if st.session_state.get('trigger_prediction', False):
-            model = binary_model if st.session_state.model_type == 'Binary' else ternary_model
-            transform_fn = transform if st.session_state.model_type == 'Binary' else transform_ternary
-            mean_pred, std_pred = predict_model(
-                model,
-                st.session_state.last_data,
-                transform_fn,
-                IMG_SIZE,
-                use_bootstrap=st.session_state.use_bootstrap
-            )
-            display_results(mean_pred, std_pred, st.session_state.model_type.lower())
-            st.session_state.trigger_prediction = False
-
-def collect_data(num_sets, model_type):
-    data_list = []
-    for i in range(int(num_sets)):
-        with st.expander(f"Data Set {i+1}"):
-            f1 = st.number_input('Input f1', format="%.2f", key=f'f1_{i}_{model_type}')
-            f2 = st.number_input('Input f2', format="%.2f", key=f'f2_{i}_{model_type}') if model_type == 'ternary' else None
-            total_conv = st.number_input('Input total conversion', format="%.2f", key=f'total_conv_{i}_{model_type}')
-            conv1 = st.number_input('Input conv1', format="%.2f", key=f'conv1_{i}_{model_type}')
-            conv2 = st.number_input('Input conv2', format="%.2f", key=f'conv2_{i}_{model_type}')
-            conv3 = st.number_input('Input conv3', format="%.2f", key=f'conv3_{i}_{model_type}') if model_type == 'ternary' else None
-            data_list.append([f1, f2, total_conv, conv1, conv2, conv3] if model_type == 'ternary' else [f1, total_conv, conv1, conv2])
-    return data_list
-
-def display_results(mean_pred, jci_half_width, model_type):
-    with st.container():
-        st.write(f"Results ({model_type.title()})")
-
-        if model_type == 'binary':
-            results_html = f"""
-            <div>
-                <p>r1 = {mean_pred[0]:.2f} ± {jci_half_width[0]:.2f} (95% JCI)</p>
-                <p>r2 = {mean_pred[1]:.2f} ± {jci_half_width[1]:.2f} (95% JCI)</p>
-            </div>
-            """
-
-        elif model_type == 'ternary':
-            results_html = f"""
-            <div>
-                <p>r12 = {mean_pred[0]:.2f} ± {jci_half_width[0]:.2f} (95% JCI),
-                   r21 = {mean_pred[1]:.2f} ± {jci_half_width[1]:.2f} (95% JCI)</p>
-                <p>r13 = {mean_pred[2]:.2f} ± {jci_half_width[2]:.2f} (95% JCI),
-                   r31 = {mean_pred[3]:.2f} ± {jci_half_width[3]:.2f} (95% JCI)</p>
-                <p>r23 = {mean_pred[4]:.2f} ± {jci_half_width[4]:.2f} (95% JCI),
-                   r32 = {mean_pred[5]:.2f} ± {jci_half_width[5]:.2f} (95% JCI)</p>
-            </div>
-            """
-
-        st.markdown(results_html, unsafe_allow_html=True)
+                # Plot JCI ellipse
+                buf = plot_jci(predictions, mean_pred, ellipse_points)
+                st.image(buf, caption="Fisher-based JCI Ellipse", use_column_width=True)
 
 if __name__ == '__main__':
     main()
