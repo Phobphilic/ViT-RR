@@ -168,9 +168,10 @@ def main():
 
         if st.button("Predict & Plot JCI"):
             # Get prediction + JCI ellipse
-            mean_pred, ci_upper, ci_lower, ellipse_x, ellipse_y = predict_with_fisher_jci(
-                binary_model, data_list, transform
+            mean_pred, ci_lower, ci_upper, predictions, ellipse_points = predict_binary_with_jci(
+                binary_model, data_list, n_iter=500
             )
+            ellipse_x, ellipse_y = ellipse_points[:,0], ellipse_points[:,1]
 
             # Show numeric results
             st.subheader("Predicted Reactivity Ratios (Binary)")
