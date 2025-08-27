@@ -3,7 +3,7 @@ import numpy as np
 import streamlit as st
 import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
-from scipy.stats import chi2
+from scipy.stats import f
 import os
 
 IMG_SIZE = 64
@@ -113,23 +113,16 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
             predictions.append(pred_values)
 
         predictions = np.array(predictions)
-
         mean_pred = np.mean(predictions, axis=0)
-
         cov_matrix = np.cov(predictions, rowvar=False)
 
         if df is None:
             df = len(mean_pred)
 
-        chi2_val = chi2.ppf(0.95, df=df)
-        jci_half_width = np.sqrt(np.diag(cov_matrix) * chi2_val)
+        f_val = f.ppf(0.95, dfn=df, dfd=n_iter - df)
+        jci_half_width = np.sqrt(np.diag(cov_matrix) * df * f_val)
 
         return mean_pred, jci_half_width
-
-    except Exception as e:
-        st.error(f"Prediction failed with error: {e}")
-        st.write(f"Data shape: {np.array(data).shape}")
-        raise
 
     except Exception as e:
         st.error(f"Prediction failed with error: {e}")
