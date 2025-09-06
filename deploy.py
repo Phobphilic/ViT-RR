@@ -83,24 +83,15 @@ def show_registrations():
         df = pd.read_csv(filename)
         st.sidebar.write(f"Total users registered: {len(df)}")
 
-def predict_model(model, data, data_transform_function, img_size, n_iter=200, use_bootstrap=True, df=None):
+def predict_model(model, data, data_transform_function, img_size, n_iter=20, noise_level=0.01):
     try:
-        if not use_bootstrap:
-            img_tensor = data_transform_function(np.array(data), img_size=img_size)
-            with torch.no_grad():
-                pred = model(img_tensor.unsqueeze(0))
-            pred_values = np.power(10, pred.squeeze(0).tolist())
-            return pred_values, np.zeros_like(pred_values)
-
-        seed = int(np.sum([np.sum(row) for row in data]) * 1e6) % (2**32 - 1)
-        rng = np.random.default_rng(seed)
-
         predictions = []
+
         for _ in range(n_iter):
             noisy_data = []
             for row in data:
                 perturbed_row = [
-                    x + rng.normal(0, 0.03 * max(abs(x), 1e-6)) if x is not None else 0.0
+                    x + np.random.normal(0, noise_level * max(abs(x), 1e-6)) if x is not None else 0.0
                     for x in row
                 ]
                 noisy_data.append(perturbed_row)
@@ -108,21 +99,14 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
             img_tensor = data_transform_function(np.array(noisy_data), img_size=img_size)
             with torch.no_grad():
                 pred = model(img_tensor.unsqueeze(0))
-            pred_values = np.power(10, pred.squeeze(0).tolist())
-            predictions.append(pred_values)
+                pred_values = np.power(10, pred.squeeze(0).tolist())  # log10 to original scale
+                predictions.append(pred_values)
 
         predictions = np.array(predictions)
-        mean_pred = np.mean(predictions, axis=0)
-        cov_matrix = np.cov(predictions, rowvar=False)
+        mean_pred = predictions.mean(axis=0)
+        std_pred = predictions.std(axis=0)
 
-        n = len(data)
-        p = len(mean_pred) if df is None else df
-
-        # Fisher-based JCI
-        f_val = f.ppf(0.95, dfn=p, dfd=n - p)
-        jci_half_width = np.sqrt(np.diag(cov_matrix) * p * f_val / (n - p))
-
-        return mean_pred, jci_half_width
+        return mean_pred, std_pred
 
     except Exception as e:
         st.error(f"Prediction failed with error: {e}")
@@ -197,13 +181,14 @@ def handle_model_interaction():
             model = binary_model if st.session_state.model_type == 'Binary' else ternary_model
             transform_fn = transform if st.session_state.model_type == 'Binary' else transform_ternary
             mean_pred, std_pred = predict_model(
-                model,
-                st.session_state.last_data,
-                transform_fn,
-                IMG_SIZE,
-                use_bootstrap=st.session_state.use_bootstrap
-            )
-            display_results(mean_pred, std_pred, st.session_state.model_type.lower())
+                binary_model if st.session_state.model_type == 'Binary' else ternary_model,
+                data_list,
+                transform if st.session_state.model_type == 'Binary' else transform_ternary,
+                IMG_SIZE)
+
+            if mean_pred is not None and std_pred is not None:
+                display_results(mean_pred, std_pred, st.session_state.model_type.lower())
+
             st.session_state.trigger_prediction = False
 
 def collect_data(num_sets, model_type):
@@ -248,30 +233,28 @@ def collect_data(num_sets, model_type):
 
     return data_list
 
-def display_results(mean_pred, jci_half_width, model_type):
+def display_results(mean_pred, std_pred, model_type):
     with st.container():
         st.write(f"Results ({model_type.title()})")
 
         if model_type == 'binary':
             results_html = f"""
             <div>
-                <p>r1 = {mean_pred[0]:.2f} ± {jci_half_width[0]:.2f} (95% JCI)</p>
-                <p>r2 = {mean_pred[1]:.2f} ± {jci_half_width[1]:.2f} (95% JCI)</p>
+                <p>r1 = {mean_pred[0]:.2f} ± {std_pred[0]:.2f}</p>
+                <p>r2 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
             </div>
             """
+            st.markdown(results_html, unsafe_allow_html=True)
+
         elif model_type == 'ternary':
             results_html = f"""
             <div>
-                <p>r12 = {mean_pred[0]:.2f} ± {jci_half_width[0]:.2f} (95% JCI),
-                   r21 = {mean_pred[1]:.2f} ± {jci_half_width[1]:.2f} (95% JCI)</p>
-                <p>r13 = {mean_pred[2]:.2f} ± {jci_half_width[2]:.2f} (95% JCI),
-                   r31 = {mean_pred[3]:.2f} ± {jci_half_width[3]:.2f} (95% JCI)</p>
-                <p>r23 = {mean_pred[4]:.2f} ± {jci_half_width[4]:.2f} (95% JCI),
-                   r32 = {mean_pred[5]:.2f} ± {jci_half_width[5]:.2f} (95% JCI)</p>
+                <p>r12 = {mean_pred[0]:.2f} ± {std_pred[0]:.2f}, r21 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
+                <p>r13 = {mean_pred[2]:.2f} ± {std_pred[2]:.2f}, r31 = {mean_pred[3]:.2f} ± {std_pred[3]:.2f}</p>
+                <p>r23 = {mean_pred[4]:.2f} ± {std_pred[4]:.2f}, r32 = {mean_pred[5]:.2f} ± {std_pred[5]:.2f}</p>
             </div>
             """
-
-        st.markdown(results_html, unsafe_allow_html=True)
+            st.markdown(results_html, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
