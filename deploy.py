@@ -240,8 +240,8 @@ def display_results(mean_pred, std_pred, model_type):
         if model_type == 'binary':
             results_html = f"""
             <div>
-                <p>r1 = {mean_pred[0]:.2f} ± {std_pred[0]:.2f}</p>
-                <p>r2 = {mean_pred[1]:.2f} ± {std_pred[1]:.2f}</p>
+                <p>r1 = {mean_pred[0]:.3f} ± {std_pred[0]:.3f}</p>
+                <p>r2 = {mean_pred[1]:.3f} ± {std_pred[1]:.3f}</p>
             </div>
             """
             st.markdown(results_html, unsafe_allow_html=True)
