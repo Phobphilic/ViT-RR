@@ -86,22 +86,26 @@ def show_registrations():
 def predict_model(model, data, data_transform_function, img_size, n_iter=200, use_bootstrap=True, df=None):
     try:
         if not use_bootstrap:
-            img_tensor = data_transform_function(np.array(data), img_size=img_size)
+            clean_data = np.nan_to_num(np.array(data, dtype=float), nan=0.0)
+            img_tensor = data_transform_function(clean_data, img_size=img_size)
             with torch.no_grad():
                 pred = model(img_tensor.unsqueeze(0))
             pred_values = np.power(10, pred.squeeze(0).tolist())
             return pred_values, np.zeros_like(pred_values)
 
-        seed = int(np.sum([np.sum(row) for row in data]) * 1e6) % (2**32 - 1)
+        clean_data = np.nan_to_num(np.array(data, dtype=float), nan=0.0)
+        seed = int(clean_data.sum() * 1e6) % (2**32 - 1)
         rng = np.random.default_rng(seed)
 
         predictions = []
+        p = model.output_dim if hasattr(model, "output_dim") else None
+        n_iter = max(n_iter, (p or 6) + 5)  
+
         for _ in range(n_iter):
             noisy_data = []
-            for row in data:
+            for row in clean_data:
                 perturbed_row = [
-                    x + rng.normal(0, 0.03 * max(abs(x), 1e-6)) if x is not None else 0.0
-                    for x in row
+                    x + rng.normal(0, 0.03 * max(abs(x), 1e-6)) for x in row
                 ]
                 noisy_data.append(perturbed_row)
 
@@ -115,12 +119,17 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
         mean_pred = np.mean(predictions, axis=0)
         cov_matrix = np.cov(predictions, rowvar=False)
 
-        n = len(data)
-        p = len(mean_pred) if df is None else df
+        n = predictions.shape[0] 
+        p = len(mean_pred) if df is None else int(df)
+        dfd = n - p
 
-        # Fisher-based JCI
-        f_val = f.ppf(0.95, dfn=p, dfd=n - p)
-        jci_half_width = np.sqrt(np.diag(cov_matrix) * p * f_val / (n - p))
+        if dfd > 0 and np.isfinite(cov_matrix).all():
+            f_val = f.ppf(0.95, dfn=p, dfd=dfd)
+            jci_half_width = np.sqrt(np.diag(cov_matrix) * p * f_val / dfd)
+        else:
+            lower = np.percentile(predictions, 2.5, axis=0)
+            upper = np.percentile(predictions, 97.5, axis=0)
+            jci_half_width = (upper - lower) / 2.0
 
         return mean_pred, jci_half_width
 
