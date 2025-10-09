@@ -264,19 +264,19 @@ def display_results(mean_pred, jci_half_width, model_type):
         if model_type == 'binary':
             results_html = f"""
             <div>
-                <p>r1 = {mean_pred[0]:.2f} ± {jci_half_width[0]:.2f} (95% JCI)</p>
-                <p>r2 = {mean_pred[1]:.2f} ± {jci_half_width[1]:.2f} (95% JCI)</p>
+                <p>r1 = {mean_pred[0]:.3f} ± {jci_half_width[0]:.3f} (95% JCI)</p>
+                <p>r2 = {mean_pred[1]:.3f} ± {jci_half_width[1]:.3f} (95% JCI)</p>
             </div>
             """
         elif model_type == 'ternary':
             results_html = f"""
             <div>
-                <p>r12 = {mean_pred[0]:.2f} ± {jci_half_width[0]:.2f} (95% JCI),
-                   r21 = {mean_pred[1]:.2f} ± {jci_half_width[1]:.2f} (95% JCI)</p>
-                <p>r13 = {mean_pred[2]:.2f} ± {jci_half_width[2]:.2f} (95% JCI),
-                   r31 = {mean_pred[3]:.2f} ± {jci_half_width[3]:.2f} (95% JCI)</p>
-                <p>r23 = {mean_pred[4]:.2f} ± {jci_half_width[4]:.2f} (95% JCI),
-                   r32 = {mean_pred[5]:.2f} ± {jci_half_width[5]:.2f} (95% JCI)</p>
+                <p>r12 = {mean_pred[0]:.3f} ± {jci_half_width[0]:.3f} (95% JCI),
+                   r21 = {mean_pred[1]:.3f} ± {jci_half_width[1]:.3f} (95% JCI)</p>
+                <p>r13 = {mean_pred[2]:.3f} ± {jci_half_width[2]:.3f} (95% JCI),
+                   r31 = {mean_pred[3]:.3f} ± {jci_half_width[3]:.3f} (95% JCI)</p>
+                <p>r23 = {mean_pred[4]:.3f} ± {jci_half_width[4]:.3f} (95% JCI),
+                   r32 = {mean_pred[5]:.3f} ± {jci_half_width[5]:.3f} (95% JCI)</p>
             </div>
             """
 
