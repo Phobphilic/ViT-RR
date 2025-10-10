@@ -99,11 +99,9 @@ def show_registrations():
         st.sidebar.write(f"⏳ Pending approval: {pending}")
 
 def admin_approval_panel():
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("🔐 Admin Panel")
-    password = st.sidebar.text_input("Admin password", type="password")
-    if password == "zhangzexi1!":
-        st.subheader("User Approval Panel")
+    st.subheader("User Approval Panel")
+    password = st.text_input("Admin password", type="password")
+    if password == "adminpass": # TODO: Replace or secure this
         if os.path.exists(REGISTRATION_FILE):
             df = pd.read_csv(REGISTRATION_FILE)
             for i, row in df.iterrows():
