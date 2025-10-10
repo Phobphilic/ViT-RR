@@ -32,11 +32,13 @@ If you do, please consider citing our paper:  *Angew. Chem. Int. Ed.* **2025**, 
 
 ## Installation and Usage
 
-You can use the determination platform by deploy the model locally. Please follow these steps:
+### The online app: [RatioGen](https://ratiogen.streamlit.app/)
 
-### Requirements (see `requirements.txt`)
+### The model can also be deployed locally. Please follow these steps:
 
-### Install Dependencies
+**Requirements (see `requirements.txt`)**
+
+**Install Dependencies**
 
 Clone this repository and install the necessary dependencies:
 
@@ -46,7 +48,8 @@ cd ViT-RR
 pip install -r requirements.txt
 ```
 
-### Run the App Locally
+**Run the App Locally**
+
 To run the Streamlit app locally:
 ```
 streamlit run deploy.py
