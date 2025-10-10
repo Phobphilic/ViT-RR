@@ -101,7 +101,7 @@ def show_registrations():
 def admin_approval_panel():
     st.subheader("User Approval Panel")
     password = st.text_input("Admin password", type="password")
-    if password == "adminpass": # TODO: Replace or secure this
+    if password == "zhangzexi1!":
         if os.path.exists(REGISTRATION_FILE):
             df = pd.read_csv(REGISTRATION_FILE)
             for i, row in df.iterrows():
