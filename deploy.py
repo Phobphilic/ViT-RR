@@ -5,8 +5,14 @@ import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
 from scipy.stats import f
 import os
+import smtplib
+from email.mime.text import MIMEText
 
 IMG_SIZE = 64
+ADMIN_EMAIL = "869959223@qq.com" 
+EMAIL_PASSWORD = "zhangzexi1!"
+REGISTRATION_FILE = "user_registrations.csv"
+
 st.set_page_config(layout="wide", page_title="RatioGen: Reactivity Ratio Determination Model")
 
 def add_custom_css():
@@ -32,6 +38,86 @@ def add_custom_css():
     """
     st.markdown(css, unsafe_allow_html=True)
 
+def send_notification(username, email, institution):
+    try:
+        msg = MIMEText(f"A new user has registered:\n\nUsername: {username}\nEmail: {email}\nInstitution: {institution}\n\nPlease review and approve in user_registrations.csv.")
+        msg['Subject'] = 'New RatioGen Registration Pending Approval'
+        msg['From'] = ADMIN_EMAIL
+        msg['To'] = ADMIN_EMAIL
+
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(ADMIN_EMAIL, EMAIL_PASSWORD)
+            server.send_message(msg)
+    except Exception as e:
+        st.warning(f"Could not send email notification: {e}")
+
+def register_user():
+    st.sidebar.title("User Registration")
+    st.sidebar.write("Please register with your institutional email to request access.")
+
+    username = st.sidebar.text_input("Username")
+    email = st.sidebar.text_input("Institutional Email")
+    institution = st.sidebar.text_input("Institution Name")
+
+    if os.path.exists(REGISTRATION_FILE):
+        df = pd.read_csv(REGISTRATION_FILE)
+        if email in df['Email'].values:
+            approved = df[df['Email'] == email]['Approved'].values[0]
+            if approved:
+                st.session_state['registered'] = True
+                st.sidebar.success("You are already approved. You may use the app.")
+            else:
+                st.sidebar.info("Registration pending approval. Please wait.")
+        else:
+            if st.sidebar.button("Register"):
+                if not (email.endswith('.edu') or '.edu.' in email or '.ac.' in email or '.org' in email or email.endswith('.edu.cn')):
+                    st.sidebar.error("Please use a valid institutional email address.")
+                    return
+                new_data = pd.DataFrame([[username, email, institution, False]], columns=['Username', 'Email', 'Institution', 'Approved'])
+                df = pd.concat([df, new_data], ignore_index=True)
+                df.to_csv(REGISTRATION_FILE, index=False)
+                send_notification(username, email, institution)
+                st.sidebar.success("Registration submitted. You will be notified once approved.")
+    else:
+        if st.sidebar.button("Register"):
+            if not (email.endswith('.edu') or '.edu.' in email or '.ac.' in email or '.org' in email or email.endswith('.edu.cn')):
+                st.sidebar.error("Please use a valid institutional email address.")
+                return
+            df = pd.DataFrame([[username, email, institution, False]], columns=['Username', 'Email', 'Institution', 'Approved'])
+            df.to_csv(REGISTRATION_FILE, index=False)
+            send_notification(username, email, institution)
+            st.sidebar.success("Registration submitted. You will be notified once approved.")
+
+def show_registrations():
+    if os.path.exists(REGISTRATION_FILE):
+        df = pd.read_csv(REGISTRATION_FILE)
+        total = len(df)
+        approved = df['Approved'].sum()
+        pending = total - approved
+        st.sidebar.write(f"✅ Approved users: {approved}")
+        st.sidebar.write(f"⏳ Pending approval: {pending}")
+
+def admin_approval_panel():
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🔐 Admin Panel")
+    password = st.sidebar.text_input("Admin password", type="password")
+    if password == "zhangzexi1!":
+        st.subheader("User Approval Panel")
+        if os.path.exists(REGISTRATION_FILE):
+            df = pd.read_csv(REGISTRATION_FILE)
+            for i, row in df.iterrows():
+                if not row['Approved']:
+                    col1, col2, col3 = st.columns([3, 3, 1])
+                    col1.markdown(f"**{row['Username']}** ({row['Email']})")
+                    col2.markdown(f"Institution: {row['Institution']}")
+                    if col3.button("Approve", key=f"approve_{i}"):
+                        df.at[i, 'Approved'] = True
+                        df.to_csv(REGISTRATION_FILE, index=False)
+                        st.success(f"Approved {row['Username']}")
+        else:
+            st.info("No registrations found.")
+
 @st.cache_data
 def load_models():
     binary_model = SimpViT()
@@ -50,38 +136,6 @@ def load_models():
     return binary_model, ternary_model
 
 binary_model, ternary_model = load_models()
-
-def register_user():
-    st.sidebar.title("User Registration")
-    st.sidebar.write("Please register to access the application features.")
-  
-    username = st.sidebar.text_input("Username")
-    email = st.sidebar.text_input("Email")
-    filename = "user_registrations.csv"
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-        if email in df['Email'].values:
-            st.session_state['registered'] = True
-            st.sidebar.success("You are already registered and may continue to use the app.")
-        else:
-            if st.sidebar.button("Register"):
-                new_data = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
-                df = pd.concat([df, new_data], ignore_index=True)
-                df.to_csv(filename, index=False)
-                st.session_state['registered'] = True
-                st.sidebar.success("Registration successful! You may now use the app.")
-    else:
-        if st.sidebar.button("Register"):
-            df = pd.DataFrame([[username, email]], columns=['Username', 'Email'])
-            df.to_csv(filename, index=False)
-            st.session_state['registered'] = True
-            st.sidebar.success("Registration successful! You may now use the app.")
-
-def show_registrations():
-    filename = "user_registrations.csv"
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
-        st.sidebar.write(f"Total users registered: {len(df)}")
 
 def predict_model(model, data, data_transform_function, img_size, n_iter=200, use_bootstrap=True, df=None):
     try:
