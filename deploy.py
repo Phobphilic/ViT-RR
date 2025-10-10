@@ -199,6 +199,7 @@ def main():
         st.session_state['registered'] = False
     register_user()
     show_registrations()
+    admin_approval_panel()
 
     if st.session_state['registered']:
         col1, col2 = st.columns(2)
