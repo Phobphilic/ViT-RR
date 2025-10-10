@@ -195,29 +195,34 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
 def main():
     add_custom_css()
     st.title('RatioGen: Reactivity Ratio Determination Model')
-    if 'registered' not in st.session_state:
-        st.session_state['registered'] = False
-    register_user()
-    show_registrations()
-    admin_approval_panel()
 
-    if st.session_state['registered']:
-        col1, col2 = st.columns(2)
-        if col1.button('Binary Model'):
-            st.session_state.model_type = 'Binary'
-            st.session_state.input_method = None
-            st.session_state.trigger_prediction = False
-        if col2.button('Ternary Model'):
-            st.session_state.model_type = 'Ternary'
-            st.session_state.input_method = None
-            st.session_state.trigger_prediction = False
+    tab1, tab2 = st.tabs(["User App", "Admin Panel"])
 
-        if st.session_state.get('model_type'):
-            st.write(f"You selected the {st.session_state.model_type} model.")
-            st.header(f"Step 2: Input data for {st.session_state.model_type} model")
+    with tab1:
+        if 'registered' not in st.session_state:
+            st.session_state['registered'] = False
+        register_user()
+        show_registrations()
 
-            handle_model_interaction()
+        if st.session_state['registered']:
+            col1, col2 = st.columns(2)
+            if col1.button('Binary Model'):
+                st.session_state.model_type = 'Binary'
+                st.session_state.input_method = None
+                st.session_state.trigger_prediction = False
+            if col2.button('Ternary Model'):
+                st.session_state.model_type = 'Ternary'
+                st.session_state.input_method = None
+                st.session_state.trigger_prediction = False
 
+            if st.session_state.get('model_type'):
+                st.write(f"You selected the {st.session_state.model_type} model.")
+                st.header(f"Step 2: Input data for {st.session_state.model_type} model")
+                handle_model_interaction()
+
+    with tab2:
+        admin_approval_panel()
+        
 def handle_model_interaction():
     col1, col2 = st.columns(2)
     if col1.button('Manual Data Entry'):
