@@ -5,6 +5,12 @@ We provide a machine learning (ML)-based platform for determining reactivity rat
 This tool provides a user-friendly interface deployed through Streamlit, making it easy to explore the reactivity ratios for a wide variety of monomer combinations under varying conditions. By simply inputting experimental data, users can instantly predict the corresponding reactivity ratios.
 
 ---
+## Our related paper has been published in *Angew. Chem. Int. Ed.* ([DOI: 10.1002/anie.202513086](https://doi.org/10.1002/anie.202513086))!  
+
+Feel free to use this method for your research.  
+If you do, please consider citing our paper:  *Angew. Chem. Int. Ed.* **2025**, *e202513086*.
+
+---
 ## Database
 2D and 3D *r*FPs can be downloaded from the open repository:
 
