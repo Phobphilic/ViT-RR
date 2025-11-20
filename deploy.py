@@ -5,13 +5,11 @@ import pandas as pd
 from model_utils import SimpViT, SimpViT_3D, transform, transform_ternary
 from scipy.stats import f
 import os
-import smtplib
-from email.mime.text import MIMEText
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 IMG_SIZE = 64
-ADMIN_EMAIL = "869959223@qq.com" 
-EMAIL_PASSWORD = "zhangzexi1!"
-REGISTRATION_FILE = "user_registrations.csv"
+ADMIN_PASSWORD = "zhangzexi1!"
 
 st.set_page_config(layout="wide", page_title="RatioGen: Reactivity Ratio Determination Model")
 
@@ -38,83 +36,94 @@ def add_custom_css():
     """
     st.markdown(css, unsafe_allow_html=True)
 
-def send_notification(username, email, institution):
+@st.cache_resource
+def get_google_sheet():
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    
     try:
-        msg = MIMEText(f"A new user has registered:\n\nUsername: {username}\nEmail: {email}\nInstitution: {institution}\n\nPlease review and approve in user_registrations.csv.")
-        msg['Subject'] = 'New RatioGen Registration Pending Approval'
-        msg['From'] = ADMIN_EMAIL
-        msg['To'] = ADMIN_EMAIL
-
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()
-            server.login(ADMIN_EMAIL, EMAIL_PASSWORD)
-            server.send_message(msg)
+        creds_dict = st.secrets["gcp_service_account"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        client = gspread.authorize(creds)
+        
+        sheet_name = st.secrets.get("sheet_name", "user_registrations") 
+        sheet = client.open(sheet_name).sheet1
+        return sheet
     except Exception as e:
-        st.warning(f"Could not send email notification: {e}")
+        st.error(f"Failed to connect to Google Sheets. Check your Secrets configuration. Error: {e}")
+        return None
 
 def register_user():
-    st.sidebar.title("User Registration")
-    st.sidebar.write("Please register with your institutional email to request access.")
+    st.sidebar.title("Access Control")
+    st.sidebar.write("Please log in or register with your institutional email.")
 
     username = st.sidebar.text_input("Username")
     email = st.sidebar.text_input("Institutional Email")
     institution = st.sidebar.text_input("Institution Name")
+    
+    submit_button = st.sidebar.button("Login / Register")
 
-    if os.path.exists(REGISTRATION_FILE):
-        df = pd.read_csv(REGISTRATION_FILE)
-        if email in df['Email'].values:
-            approved = df[df['Email'] == email]['Approved'].values[0]
-            if approved:
-                st.session_state['registered'] = True
-                st.sidebar.success("You are already approved. You may use the app.")
-            else:
-                st.sidebar.info("Registration pending approval. Please wait.")
-        else:
-            if st.sidebar.button("Register"):
-                if not (email.endswith('.edu') or '.edu.' in email or '.ac.' in email or '.org' in email or email.endswith('.edu.cn')):
-                    st.sidebar.error("Please use a valid institutional email address.")
-                    return
-                new_data = pd.DataFrame([[username, email, institution, False]], columns=['Username', 'Email', 'Institution', 'Approved'])
-                df = pd.concat([df, new_data], ignore_index=True)
-                df.to_csv(REGISTRATION_FILE, index=False)
-                send_notification(username, email, institution)
-                st.sidebar.success("Registration submitted. You will be notified once approved.")
-    else:
-        if st.sidebar.button("Register"):
-            if not (email.endswith('.edu') or '.edu.' in email or '.ac.' in email or '.org' in email or email.endswith('.edu.cn')):
-                st.sidebar.error("Please use a valid institutional email address.")
+    if submit_button:
+        if not email or not username:
+            st.sidebar.error("Please enter both Username and Email.")
+            return
+
+        if "@" not in email or "." not in email:
+            st.sidebar.error("Please enter a valid email address.")
+            return
+
+        try:
+            sheet = get_google_sheet()
+            if sheet is None:
                 return
-            df = pd.DataFrame([[username, email, institution, False]], columns=['Username', 'Email', 'Institution', 'Approved'])
-            df.to_csv(REGISTRATION_FILE, index=False)
-            send_notification(username, email, institution)
-            st.sidebar.success("Registration submitted. You will be notified once approved.")
 
-def show_registrations():
-    if os.path.exists(REGISTRATION_FILE):
-        df = pd.read_csv(REGISTRATION_FILE)
-        total = len(df)
-        approved = df['Approved'].sum()
-        pending = total - approved
-        st.sidebar.write(f"✅ Approved users: {approved}")
-        st.sidebar.write(f"⏳ Pending approval: {pending}")
+            records = sheet.get_all_records()
+            df = pd.DataFrame(records)
 
-def admin_approval_panel():
-    st.subheader("User Approval Panel")
+            if df.empty and 'Email' not in df.columns:
+                 df = pd.DataFrame(columns=['Username', 'Email', 'Institution', 'LoginCount'])
+
+            if 'Email' in df.columns and email in df['Email'].values:
+                st.session_state['registered'] = True
+                st.session_state['user_email'] = email
+                st.sidebar.success(f"Welcome back, {username}!")
+            else:
+                new_row = [username, email, institution, 1]
+                sheet.append_row(new_row)
+                
+                st.session_state['registered'] = True
+                st.session_state['user_email'] = email
+                st.sidebar.success("Registration successful! Data saved to Cloud.")
+                
+        except Exception as e:
+            st.sidebar.error(f"Database connection error: {e}")
+            
+    if st.session_state.get('registered'):
+        st.sidebar.info(f"Logged in as: {st.session_state.get('user_email')}")
+
+def admin_view_panel():
+    st.subheader("Registered Users Database (Google Sheets)")
+    st.write("Enter password to view all registered users.")
     password = st.text_input("Admin password", type="password")
-    if password == "zhangzexi1!":
-        if os.path.exists(REGISTRATION_FILE):
-            df = pd.read_csv(REGISTRATION_FILE)
-            for i, row in df.iterrows():
-                if not row['Approved']:
-                    col1, col2, col3 = st.columns([3, 3, 1])
-                    col1.markdown(f"**{row['Username']}** ({row['Email']})")
-                    col2.markdown(f"Institution: {row['Institution']}")
-                    if col3.button("Approve", key=f"approve_{i}"):
-                        df.at[i, 'Approved'] = True
-                        df.to_csv(REGISTRATION_FILE, index=False)
-                        st.success(f"Approved {row['Username']}")
-        else:
-            st.info("No registrations found.")
+    
+    if password == ADMIN_PASSWORD:
+        try:
+            sheet = get_google_sheet()
+            if sheet:
+                data = sheet.get_all_records()
+                df = pd.DataFrame(data)
+                
+                st.write(f"Total Users: {len(df)}")
+                st.dataframe(df)
+                
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="Download User Data as CSV",
+                    data=csv,
+                    file_name='user_registrations_backup.csv',
+                    mime='text/csv',
+                )
+        except Exception as e:
+            st.error(f"Could not fetch data: {e}")
 
 @st.cache_data
 def load_models():
@@ -190,89 +199,6 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
         st.write(f"Data shape: {np.array(data).shape}")
         raise
 
-def main():
-    add_custom_css()
-    st.title('RatioGen: Reactivity Ratio Determination Model')
-
-    tab1, tab2 = st.tabs(["User App", "Admin Panel"])
-
-    with tab1:
-        if 'registered' not in st.session_state:
-            st.session_state['registered'] = False
-        register_user()
-        show_registrations()
-
-        if st.session_state['registered']:
-            col1, col2 = st.columns(2)
-            if col1.button('Binary Model'):
-                st.session_state.model_type = 'Binary'
-                st.session_state.input_method = None
-                st.session_state.trigger_prediction = False
-            if col2.button('Ternary Model'):
-                st.session_state.model_type = 'Ternary'
-                st.session_state.input_method = None
-                st.session_state.trigger_prediction = False
-
-            if st.session_state.get('model_type'):
-                st.write(f"You selected the {st.session_state.model_type} model.")
-                st.header(f"Step 2: Input data for {st.session_state.model_type} model")
-                handle_model_interaction()
-
-    with tab2:
-        admin_approval_panel()
-        
-def handle_model_interaction():
-    col1, col2 = st.columns(2)
-    if col1.button('Manual Data Entry'):
-        st.session_state.input_method = 'Manual'
-    if col2.button('Upload Excel File'):
-        st.session_state.input_method = 'Excel'
-        if st.session_state.model_type == 'Binary':
-            st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
-        elif st.session_state.model_type == 'Ternary':
-            st.image("excel_format_ternary.png", caption="Excel format example for Ternary Model")
-
-    if st.session_state.input_method:
-        data_list = []
-
-        if st.session_state.input_method == 'Manual':
-            num_sets = st.number_input('Number of data sets', min_value=1, value=1, step=1)
-            data_list = collect_data(num_sets, st.session_state.model_type.lower())
-
-        elif st.session_state.input_method == 'Excel':
-            file = st.file_uploader("Upload Excel file", type=['xlsx'])
-            if file:
-                try:
-                    data_df = pd.read_excel(file, index_col=0)
-                    data_list = data_df.values.tolist()
-                    if not data_list:
-                        st.error("Excel file is empty or formatted incorrectly.")
-                    else:
-                        st.success("Excel file has been loaded successfully.")
-                except Exception as e:
-                    st.error("Failed to read Excel file. Please try the example format.")
-
-        use_bootstrap = st.checkbox("Use Bootstrap Sampling for Error Estimation", value=True)
-
-        if data_list:
-            if st.button(f'Predict({st.session_state.model_type})'):
-                st.session_state.trigger_prediction = True
-                st.session_state.last_data = data_list
-                st.session_state.use_bootstrap = use_bootstrap
-
-        if st.session_state.get('trigger_prediction', False):
-            model = binary_model if st.session_state.model_type == 'Binary' else ternary_model
-            transform_fn = transform if st.session_state.model_type == 'Binary' else transform_ternary
-            mean_pred, std_pred = predict_model(
-                model,
-                st.session_state.last_data,
-                transform_fn,
-                IMG_SIZE,
-                use_bootstrap=st.session_state.use_bootstrap
-            )
-            display_results(mean_pred, std_pred, st.session_state.model_type.lower())
-            st.session_state.trigger_prediction = False
-
 def collect_data(num_sets, model_type):
     st.subheader("Upload data file or enter manually")
 
@@ -339,6 +265,95 @@ def display_results(mean_pred, jci_half_width, model_type):
             """
 
         st.markdown(results_html, unsafe_allow_html=True)
+
+def handle_model_interaction():
+    col1, col2 = st.columns(2)
+    if col1.button('Manual Data Entry'):
+        st.session_state.input_method = 'Manual'
+    if col2.button('Upload Excel File'):
+        st.session_state.input_method = 'Excel'
+        if st.session_state.model_type == 'Binary':
+            # 请确保这些图片在你的仓库中
+            if os.path.exists("excel_format_binary.png"):
+                st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
+        elif st.session_state.model_type == 'Ternary':
+             if os.path.exists("excel_format_ternary.png"):
+                st.image("excel_format_ternary.png", caption="Excel format example for Ternary Model")
+
+    if st.session_state.input_method:
+        data_list = []
+
+        if st.session_state.input_method == 'Manual':
+            num_sets = st.number_input('Number of data sets', min_value=1, value=1, step=1)
+            data_list = collect_data(num_sets, st.session_state.model_type.lower())
+
+        elif st.session_state.input_method == 'Excel':
+            file = st.file_uploader("Upload Excel file", type=['xlsx'])
+            if file:
+                try:
+                    data_df = pd.read_excel(file, index_col=0)
+                    data_list = data_df.values.tolist()
+                    if not data_list:
+                        st.error("Excel file is empty or formatted incorrectly.")
+                    else:
+                        st.success("Excel file has been loaded successfully.")
+                except Exception as e:
+                    st.error("Failed to read Excel file. Please try the example format.")
+
+        use_bootstrap = st.checkbox("Use Bootstrap Sampling for Error Estimation", value=True)
+
+        if data_list:
+            if st.button(f'Predict({st.session_state.model_type})'):
+                st.session_state.trigger_prediction = True
+                st.session_state.last_data = data_list
+                st.session_state.use_bootstrap = use_bootstrap
+
+        if st.session_state.get('trigger_prediction', False):
+            model = binary_model if st.session_state.model_type == 'Binary' else ternary_model
+            transform_fn = transform if st.session_state.model_type == 'Binary' else transform_ternary
+            mean_pred, std_pred = predict_model(
+                model,
+                st.session_state.last_data,
+                transform_fn,
+                IMG_SIZE,
+                use_bootstrap=st.session_state.use_bootstrap
+            )
+            display_results(mean_pred, std_pred, st.session_state.model_type.lower())
+            st.session_state.trigger_prediction = False
+
+def main():
+    add_custom_css()
+    st.title('RatioGen: Reactivity Ratio Determination Model')
+
+    tab1, tab2 = st.tabs(["User App", "Registered Users (Admin)"])
+
+    with tab1:
+        if 'registered' not in st.session_state:
+            st.session_state['registered'] = False
+        
+        register_user()
+
+        if st.session_state['registered']:
+            st.divider()
+            col1, col2 = st.columns(2)
+            if col1.button('Binary Model'):
+                st.session_state.model_type = 'Binary'
+                st.session_state.input_method = None
+                st.session_state.trigger_prediction = False
+            if col2.button('Ternary Model'):
+                st.session_state.model_type = 'Ternary'
+                st.session_state.input_method = None
+                st.session_state.trigger_prediction = False
+
+            if st.session_state.get('model_type'):
+                st.write(f"You selected the {st.session_state.model_type} model.")
+                st.header(f"Step 2: Input data for {st.session_state.model_type} model")
+                handle_model_interaction()
+        else:
+            st.info("Please register or login via the sidebar to access the models.")
+
+    with tab2:
+        admin_view_panel()
 
 if __name__ == '__main__':
     main()
