@@ -9,7 +9,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 IMG_SIZE = 64
-ADMIN_PASSWORD = "zhangzexi1!"
 
 st.set_page_config(layout="wide", page_title="RatioGen: Reactivity Ratio Determination Model")
 
@@ -100,31 +99,6 @@ def register_user():
     if st.session_state.get('registered'):
         st.sidebar.info(f"Logged in as: {st.session_state.get('user_email')}")
 
-def admin_view_panel():
-    st.subheader("Registered Users Database (Google Sheets)")
-    st.write("Enter password to view all registered users.")
-    password = st.text_input("Admin password", type="password")
-    
-    if password == ADMIN_PASSWORD:
-        try:
-            sheet = get_google_sheet()
-            if sheet:
-                data = sheet.get_all_records()
-                df = pd.DataFrame(data)
-                
-                st.write(f"Total Users: {len(df)}")
-                st.dataframe(df)
-                
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="Download User Data as CSV",
-                    data=csv,
-                    file_name='user_registrations_backup.csv',
-                    mime='text/csv',
-                )
-        except Exception as e:
-            st.error(f"Could not fetch data: {e}")
-
 @st.cache_data
 def load_models():
     binary_model = SimpViT()
@@ -208,12 +182,15 @@ def collect_data(num_sets, model_type):
     if uploaded_file is not None:
         try:
             df = pd.read_excel(uploaded_file)
+            
+            # df = df.apply(pd.to_numeric, errors='coerce') 
 
             required_cols_binary = ["set num", "f1", "total conv", "conv(M1)", "conv(M2)"]
             required_cols_ternary = ["set num", "f1", "f2", "total conv", "conv(M1)", "conv(M2)", "conv(M3)"]
             required_cols = required_cols_ternary if model_type == "ternary" else required_cols_binary
 
             if not all(col in df.columns for col in required_cols):
+                st.error(f"Missing columns. Required: {required_cols}")
                 return []
 
             if model_type == "ternary":
@@ -222,6 +199,7 @@ def collect_data(num_sets, model_type):
                 data_list = df[["f1", "total conv", "conv(M1)", "conv(M2)"]].values.tolist()
 
         except Exception as e:
+            st.error(f"Error reading file: {e}")
             return []
 
     else:
@@ -273,7 +251,6 @@ def handle_model_interaction():
     if col2.button('Upload Excel File'):
         st.session_state.input_method = 'Excel'
         if st.session_state.model_type == 'Binary':
-            # 请确保这些图片在你的仓库中
             if os.path.exists("excel_format_binary.png"):
                 st.image("excel_format_binary.png", caption="Excel format example for Binary Model")
         elif st.session_state.model_type == 'Ternary':
@@ -325,35 +302,29 @@ def main():
     add_custom_css()
     st.title('RatioGen: Reactivity Ratio Determination Model')
 
-    tab1, tab2 = st.tabs(["User App", "Registered Users (Admin)"])
+    if 'registered' not in st.session_state:
+        st.session_state['registered'] = False
+    
+    register_user()
 
-    with tab1:
-        if 'registered' not in st.session_state:
-            st.session_state['registered'] = False
-        
-        register_user()
+    if st.session_state['registered']:
+        st.divider()
+        col1, col2 = st.columns(2)
+        if col1.button('Binary Model'):
+            st.session_state.model_type = 'Binary'
+            st.session_state.input_method = None
+            st.session_state.trigger_prediction = False
+        if col2.button('Ternary Model'):
+            st.session_state.model_type = 'Ternary'
+            st.session_state.input_method = None
+            st.session_state.trigger_prediction = False
 
-        if st.session_state['registered']:
-            st.divider()
-            col1, col2 = st.columns(2)
-            if col1.button('Binary Model'):
-                st.session_state.model_type = 'Binary'
-                st.session_state.input_method = None
-                st.session_state.trigger_prediction = False
-            if col2.button('Ternary Model'):
-                st.session_state.model_type = 'Ternary'
-                st.session_state.input_method = None
-                st.session_state.trigger_prediction = False
-
-            if st.session_state.get('model_type'):
-                st.write(f"You selected the {st.session_state.model_type} model.")
-                st.header(f"Step 2: Input data for {st.session_state.model_type} model")
-                handle_model_interaction()
-        else:
-            st.info("Please register or login via the sidebar to access the models.")
-
-    with tab2:
-        admin_view_panel()
+        if st.session_state.get('model_type'):
+            st.write(f"You selected the {st.session_state.model_type} model.")
+            st.header(f"Step 2: Input data for {st.session_state.model_type} model")
+            handle_model_interaction()
+    else:
+        st.info("Please register or login via the sidebar to access the models.")
 
 if __name__ == '__main__':
     main()
