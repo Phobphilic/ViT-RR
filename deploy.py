@@ -91,7 +91,7 @@ def register_user():
                 
                 st.session_state['registered'] = True
                 st.session_state['user_email'] = email
-                st.sidebar.success("Registration successful! Data saved to Cloud.")
+                st.sidebar.success("Registration successful!")
                 
         except Exception as e:
             st.sidebar.error(f"Database connection error: {e}")
