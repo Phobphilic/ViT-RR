@@ -140,7 +140,7 @@ def predict_model(model, data, data_transform_function, img_size, n_iter=200, us
             noisy_data = []
             for row in clean_data:
                 perturbed_row = [
-                    x + rng.normal(0, 0.03 * max(abs(x), 1e-6)) for x in row
+                    x + rng.normal(0, 0.04 * max(abs(x), 1e-6)) for x in row
                 ]
                 noisy_data.append(perturbed_row)
 
